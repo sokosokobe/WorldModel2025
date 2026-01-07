@@ -199,13 +199,12 @@ class DirectPromptConstructor(PromptConstructor):
     def _extract_action(self, response: str) -> str:
         action_splitter = self.instruction["meta_data"]["action_splitter"]
         pattern = rf"{action_splitter}((.|\n)*?){action_splitter}"
-        match = re.search(pattern, response)
-        if match:
-            return match.group(1).strip()
-        else:
+        matches = list(re.finditer(pattern, response))
+        if not matches:
             raise ActionParsingError(
                 f"Cannot parse action from response {response}"
             )
+        return matches[-1].group(1).strip()
 
 
 class CoTPromptConstructor(PromptConstructor):
@@ -257,16 +256,24 @@ class CoTPromptConstructor(PromptConstructor):
         return prompt
 
     def _extract_action(self, response: str) -> str:
-        # find the first occurence of action
         action_splitter = self.instruction["meta_data"]["action_splitter"]
         pattern = rf"{action_splitter}((.|\n)*?){action_splitter}"
-        match = re.search(pattern, response)
-        if match:
-            return match.group(1).strip()
-        else:
-            raise ActionParsingError(
-                f'Cannot find the answer phrase "{self.answer_phrase}" in "{response}"'
-            )
+        # Prefer the action after the (last) answer phrase, fallback to last fenced block.
+        text = response
+        if self.answer_phrase and self.answer_phrase in text:
+            text = text.rsplit(self.answer_phrase, 1)[-1]
+
+        matches = list(re.finditer(pattern, text))
+        if matches:
+            return matches[0].group(1).strip()
+
+        matches = list(re.finditer(pattern, response))
+        if matches:
+            return matches[-1].group(1).strip()
+
+        raise ActionParsingError(
+            f'Cannot find the answer phrase "{self.answer_phrase}" in "{response}"'
+        )
 
 
 class MultimodalCoTPromptConstructor(CoTPromptConstructor):
