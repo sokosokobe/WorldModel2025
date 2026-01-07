@@ -41,6 +41,58 @@ You can also run the unit tests to ensure that VisualWebArena is installed corre
 pytest -x
 ```
 
+## Macローカル最短セットアップ（Shoppingのみ）
+macOS + Docker Desktop で Shopping サイトのみ動かす最短手順です。
+
+### 前提
+- Docker Desktop（Memory 8-12GB、Disk image size は十分大きく）
+- 空き容量は 100GB 以上推奨（イメージ + 展開分）
+
+### 1) Shoppingイメージを読み込み（手動・AMD64）
+```bash
+curl -O http://metis.lti.cs.cmu.edu/webarena-images/shopping_final_0712.tar
+docker load -i shopping_final_0712.tar
+rm shopping_final_0712.tar
+```
+
+### 2) コンテナ起動 + Magento初期化
+```bash
+docker run --platform linux/amd64 --name shopping -p 7770:80 -d shopping_final_0712
+# Magentoの起動待ち（3-5分）
+docker exec shopping /var/www/magento2/bin/magento setup:store-config:set --base-url="http://localhost:7770/"
+docker exec shopping mysql -u magentouser -pMyPassword magentodb -e 'UPDATE core_config_data SET value="http://localhost:7770/" WHERE path = "web/secure/base_url";'
+docker exec shopping /var/www/magento2/bin/magento cache:flush
+```
+確認: `http://localhost:7770` が開ければOK。
+
+### 3) エージェント実行
+```bash
+export OPENAI_API_KEY="sk-..."
+export DATASET=visualwebarena
+export PLAYWRIGHT_DEFAULT_TIMEOUT=60000
+export SHOPPING="http://localhost:7770"
+export SHOPPING_ADMIN="http://localhost:7780/admin"
+export REDDIT="http://localhost:9999"
+export WIKIPEDIA="http://localhost:8888"
+export HOMEPAGE="http://localhost:4399"
+export CLASSIFIEDS="http://localhost:9980"
+export CLASSIFIEDS_RESET_TOKEN="dummy_token"
+
+python run.py \
+  --instruction_path agent/prompts/jsons/p_som_cot_id_actree_3s.json \
+  --test_start_idx 0 \
+  --test_end_idx 1 \
+  --result_dir result_shopping_test \
+  --test_config_base_dir config_files/vwa/test_shopping \
+  --model gpt-4o \
+  --action_set_tag som \
+  --observation_type image_som \
+  --render
+```
+出力: `result_shopping_test/render_0.html`。
+
+任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
