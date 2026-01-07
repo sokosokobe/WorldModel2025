@@ -242,7 +242,7 @@ async def agenerate_from_openai_chat_completion(
 
 @retry_with_exponential_backoff
 def generate_from_openai_chat_completion(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     model: str,
     temperature: float,
     max_tokens: int,
@@ -254,6 +254,26 @@ def generate_from_openai_chat_completion(
         raise ValueError(
             "OPENAI_API_KEY environment variable must be set when using OpenAI API."
         )
+
+    def _has_image_part(msg: dict[str, Any]) -> bool:
+        c = msg.get("content")
+        if isinstance(c, list):
+            for part in c:
+                if (
+                    isinstance(part, dict)
+                    and part.get("type") in ("image_url", "input_image")
+                ):
+                    return True
+        return False
+
+    # OpenAI rejects image parts outside user role; normalize to user.
+    fixed_messages: list[dict[str, Any]] = []
+    for m in messages:
+        if m.get("role") != "user" and _has_image_part(m):
+            m = dict(m)
+            m["role"] = "user"
+        fixed_messages.append(m)
+    messages = fixed_messages
     response = client.chat.completions.create(
         model=model,
         messages=messages,

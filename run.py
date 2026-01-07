@@ -255,6 +255,12 @@ def test(
     args: argparse.Namespace,
     config_file_list: list[str]
 ) -> None:
+    # 強制的に captioning を無効化
+    caption_image_fn = None
+    eval_caption_image_fn = None
+
+    render_helper = None
+
     scores = []
     max_steps = args.max_steps
 
@@ -283,16 +289,19 @@ def test(
         ):
             eval_caption_image_fn = caption_image_fn
         else:
-            eval_caption_image_fn = image_utils.get_captioning_fn(
-                args.eval_captioning_model_device,
-                torch.float16
-                if (
-                    torch.cuda.is_available()
-                    and args.eval_captioning_model_device == "cuda"
+            if "captioner" in args.observation_type:
+                eval_caption_image_fn = image_utils.get_captioning_fn(
+                    args.eval_captioning_model_device,
+                    torch.float16
+                    if (
+                        torch.cuda.is_available()
+                        and args.eval_captioning_model_device == "cuda"
+                    )
+                    else torch.float32,
+                    args.eval_captioning_model,
                 )
-                else torch.float32,
-                args.eval_captioning_model,
-            )
+            else:
+                eval_caption_image_fn = None
     else:
         caption_image_fn = None
         eval_caption_image_fn = None
@@ -460,7 +469,8 @@ def test(
                 f.write(f"[Unhandled Error] {repr(e)}\n")
                 f.write(traceback.format_exc())  # write stack trace to file
 
-        render_helper.close()
+        if render_helper is not None:
+            render_helper.close()
 
     env.close()
     if len(scores):

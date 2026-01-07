@@ -116,7 +116,12 @@ class PromptAgent(Agent):
         self.captioning_fn = captioning_fn
 
         # Check if the model is multimodal.
-        if ("gemini" in lm_config.model or "gpt-4" in lm_config.model and "vision" in lm_config.model) and type(prompt_constructor) == MultimodalCoTPromptConstructor:
+        if (
+            "gemini" in lm_config.model
+            or "gpt-4" in lm_config.model
+            and "vision" in lm_config.model
+            or "gpt-4o" in lm_config.model  # <--- 追加
+        ) and type(prompt_constructor) == MultimodalCoTPromptConstructor:
             self.multimodal_inputs = True
         else:
             self.multimodal_inputs = False
