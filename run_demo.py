@@ -4,6 +4,7 @@ Modified from https://github.com/web-arena-x/webarena/blob/main/run.py.
 """
 import argparse
 import json
+import re
 import logging
 import os
 import random
@@ -132,6 +133,23 @@ def config() -> argparse.Namespace:
         default=600,
         help="Max chars for the compressed action summary.",
     )
+    parser.add_argument(
+        "--roi_detail_enabled",
+        action="store_true",
+        help="Attach element-level details for top-ranked ids.",
+    )
+    parser.add_argument(
+        "--roi_detail_limit",
+        type=int,
+        default=8,
+        help="Max number of element detail entries to attach.",
+    )
+    parser.add_argument(
+        "--roi_detail_max_chars",
+        type=int,
+        default=200,
+        help="Max chars per field in element details.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -244,6 +262,76 @@ def update_action_history(
                 summary = summary[-max_summary_chars:]
             meta_data["action_history_summary"] = summary
     meta_data["action_history"] = [history[0]] + history[-keep_last:]
+
+
+def select_detail_ids(
+    obs_text: str,
+    objective: str,
+    limit: int,
+) -> list[str]:
+    if limit <= 0:
+        return []
+    tokens = set(re.findall(r"[a-z0-9]+", objective.lower()))
+    candidates: list[tuple[float, str]] = []
+    for line in obs_text.splitlines():
+        match = re.match(r"^\\[(\\d+)\\]\\s+\\[(.*?)\\]\\s+\\[(.*)\\]", line)
+        if not match:
+            continue
+        element_id, tag, content = match.groups()
+        score = 0.0
+        lower = content.lower()
+        for token in tokens:
+            if token in lower:
+                score += 1.0
+        if tag in ("INPUT", "TEXTAREA", "SELECT", "BUTTON"):
+            score += 0.2
+        candidates.append((score, element_id))
+
+    if not candidates:
+        return []
+    if max(c[0] for c in candidates) <= 0.0:
+        ids = [c[1] for c in candidates]
+        return ids[:limit]
+    candidates.sort(key=lambda x: (-x[0], int(x[1])))
+    return [c[1] for c in candidates[:limit]]
+
+
+def build_element_details(
+    state_info: StateInfo,
+    objective: str,
+    limit: int,
+    max_chars: int,
+) -> list[dict[str, str]]:
+    obs = state_info["observation"]
+    obs_text = obs.get("text", "") if isinstance(obs, dict) else ""
+    ids = select_detail_ids(obs_text, objective, limit)
+    meta = state_info["info"].get("observation_metadata", {})
+    image_meta = meta.get("image", {})
+    details_map: dict[str, dict[str, str]] = image_meta.get("som_id_details", {}) or {}
+
+    def _trim(value: str) -> str:
+        if max_chars > 0 and len(value) > max_chars:
+            return value[:max_chars]
+        return value
+
+    details: list[dict[str, str]] = []
+    for element_id in ids:
+        detail = details_map.get(element_id)
+        if not detail:
+            continue
+        details.append(
+            {
+                "id": element_id,
+                "tag": _trim(detail.get("tag", "")),
+                "text": _trim(detail.get("text", "")),
+                "aria_label": _trim(detail.get("aria_label", "")),
+                "title": _trim(detail.get("title", "")),
+                "class": _trim(detail.get("class", "")),
+                "dom_id": _trim(detail.get("dom_id", "")),
+                "alt": _trim(detail.get("alt", "")),
+            }
+        )
+    return details
 
 
 @beartype
@@ -381,8 +469,18 @@ def test(
         meta_data = {
             "action_history": ["None"],
             "action_history_summary": "",
+            "element_details": [],
         }
         while True:
+            if args.roi_detail_enabled:
+                meta_data["element_details"] = build_element_details(
+                    state_info,
+                    intent,
+                    args.roi_detail_limit,
+                    args.roi_detail_max_chars,
+                )
+            else:
+                meta_data["element_details"] = []
             early_stop_flag, stop_info = early_stop(
                 trajectory, max_steps, early_stop_thresholds
             )
