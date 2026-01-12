@@ -103,6 +103,12 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--precheck_snippet_limit",
+        type=int,
+        default=30,
+        help="Max number of element snippets to pass for action precheck.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -193,6 +199,22 @@ def config() -> argparse.Namespace:
         )
 
     return args
+
+
+def extract_element_snippets(
+    state_info: StateInfo,
+    limit: int,
+) -> dict[str, str]:
+    meta = state_info["info"].get("observation_metadata", {})
+    image_meta = meta.get("image", {})
+    snippets: dict[str, str] = image_meta.get("som_id_snippets", {}) or {}
+    if limit <= 0 or len(snippets) <= limit:
+        return snippets
+    keys = sorted(
+        snippets.keys(),
+        key=lambda k: int(k) if str(k).isdigit() else str(k),
+    )
+    return {k: snippets[k] for k in keys[:limit]}
 
 
 def early_stop(
@@ -389,8 +411,15 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "element_snippets": {},
+            }
             while True:
+                meta_data["element_snippets"] = extract_element_snippets(
+                    state_info,
+                    args.precheck_snippet_limit,
+                )
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
                 )

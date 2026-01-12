@@ -827,14 +827,18 @@ class ImageObservationProcessor(ObservationProcessor):
             const elements = document.querySelectorAll(combinedSelectors.join(', '));
 
             const pixelRatio = window.devicePixelRatio;
-            let csvContent = "ID,Element,Top,Right,Bottom,Left,Width,Height,Alt,Class,Id,TextContent,Interactable\\n";
+            let csvContent = "ID,Element,Top,Right,Bottom,Left,Width,Height,Alt,AriaLabel,Title,Class,Id,TextContent,Interactable\\n";
             let counter = 1;
 
             elements.forEach(element => {
                 const rect = element.getBoundingClientRect();
                 if (rect.width === 0 || rect.height === 0) return;
                 let altText = element.getAttribute('alt') || '';
+                let ariaLabel = element.getAttribute('aria-label') || '';
+                let titleText = element.getAttribute('title') || '';
                 altText = altText.replace(/"/g, ''); // Escape double quotes in alt text
+                ariaLabel = ariaLabel.replace(/"/g, ''); // Escape double quotes in aria-label
+                titleText = titleText.replace(/"/g, ''); // Escape double quotes in title
                 const classList = element.className || '';
                 const id = element.id || '';
                 let textContent = element.textContent || '';
@@ -847,7 +851,7 @@ class ImageObservationProcessor(ObservationProcessor):
                     counter, element.tagName, (rect.top + window.scrollY) * pixelRatio,
                     (rect.right + window.scrollX) * pixelRatio, (rect.bottom + window.scrollY) * pixelRatio,
                     (rect.left + window.scrollX) * pixelRatio, rect.width * pixelRatio, rect.height * pixelRatio,
-                    altText, classList, id, textContent, isInteractable
+                    altText, ariaLabel, titleText, classList, id, textContent, isInteractable
                 ].map(value => `"${value}"`).join(",");
 
                 csvContent += dataString + "\\n";
@@ -911,6 +915,7 @@ class ImageObservationProcessor(ObservationProcessor):
         bbox_id2desc = {}
         index = 0
         id2center = {}
+        som_id_snippets = {}
         existing_text_rectangles = []
         text_to_draw = []
         # Provide [id] textContent inputs to the model as text.
@@ -1087,6 +1092,28 @@ class ImageObservationProcessor(ObservationProcessor):
                         ]
                     text_content_text.add(content)
 
+                    snippet_sources = [
+                        row.get("AriaLabel", ""),
+                        row.get("Title", ""),
+                        row.get("TextContent", ""),
+                        row.get("Alt", ""),
+                        row.get("Id", ""),
+                        row.get("Class", ""),
+                    ]
+                    snippet = ""
+                    for src in snippet_sources:
+                        if pd.notna(src):
+                            src = str(src).strip()
+                            if src:
+                                snippet = src
+                                break
+                    if not snippet:
+                        snippet = str(row["Element"])
+                    snippet = snippet.replace("\n", " ").replace("\t", " ")
+                    if len(snippet) > 80:
+                        snippet = snippet[:80]
+                    som_id_snippets[unique_id] = snippet
+
             index += 1
 
         for text_rectangle, text_position, unique_id, color in text_to_draw:
@@ -1095,6 +1122,7 @@ class ImageObservationProcessor(ObservationProcessor):
             draw.text(text_position, unique_id, font=font, fill="white")
 
         content_str = "\n".join(text_content_elements)
+        self.meta_data["som_id_snippets"] = som_id_snippets
         return img, id2center, content_str
 
     def rectangles_overlap(self, rect1, rect2, padding):

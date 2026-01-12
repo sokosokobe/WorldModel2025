@@ -93,6 +93,18 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/action-precheck）
+クリック/入力前の軽量検証用に、要素の短いスニペットを提示する実験機能を追加しました。
+
+使い方:
+```bash
+--precheck_snippet_limit 30
+```
+
+挙動:
+- SoMの要素から `SNIPPETS` ブロックを作り、短いテキスト/aria/title/class/idを提示します。
+- エージェントは `SNIPPETS` を使って候補アクションを検証できます。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
