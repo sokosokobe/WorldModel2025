@@ -145,6 +145,31 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _compress_observation(
+        self,
+        obs: str,
+        objective: str,
+        meta_data: dict[str, Any],
+    ) -> str:
+        if not meta_data.get("compression_enabled"):
+            return obs
+        from agent.observation_compression import (
+            load_weights,
+            log_compression_example,
+            select_lines,
+        )
+
+        limit = int(meta_data.get("compression_limit", 0))
+        weights_path = meta_data.get("compression_weights_path", "")
+        weights = load_weights(weights_path)
+        compressed, selected_lines = select_lines(
+            obs, objective, limit, weights
+        )
+        log_path = meta_data.get("compression_log_path", "")
+        if log_path:
+            log_compression_example(log_path, objective, obs, selected_lines)
+        return compressed
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +203,7 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        obs = self._compress_observation(obs, intent, meta_data)
 
         page = state_info["info"]["page"]
         url = page.url
@@ -240,6 +266,7 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        obs = self._compress_observation(obs, intent, meta_data)
 
         page = state_info["info"]["page"]
         url = page.url
@@ -303,6 +330,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        obs = self._compress_observation(obs, intent, meta_data)
 
         page = state_info["info"]["page"]
         url = page.url

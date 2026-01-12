@@ -93,6 +93,21 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/learned-compression）
+学習用ログを吐ける観測圧縮のスキャフォールドを追加しました。
+
+使い方:
+```bash
+--compression_enabled
+--compression_limit 60
+--compression_weights_path path/to/weights.json
+--compression_log_path path/to/compression.jsonl
+```
+
+挙動:
+- 目的語と観測行の一致度で行を選別します。
+- 圧縮前後のデータを jsonl で保存し、後で学習に使えます。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
