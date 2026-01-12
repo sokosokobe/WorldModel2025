@@ -224,7 +224,7 @@ class DirectPromptConstructor(PromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
 
         # input x
         current = template.format(
@@ -294,7 +294,7 @@ class CoTPromptConstructor(PromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),
@@ -374,7 +374,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),

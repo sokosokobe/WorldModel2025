@@ -432,7 +432,6 @@ def build_failure_observation(
         return f"FAIL_ERROR: {fail_error}\nHTML_SNIPPET: {html}"
     return f"FAIL_ERROR: {fail_error}"
 
-
 def early_stop(
     trajectory: Trajectory, max_steps: int, thresholds: dict[str, int]
 ) -> tuple[bool, str]:
@@ -685,6 +684,11 @@ def test(
                     action, state_info, meta_data, args.render_screenshot
                 )
                 meta_data["action_history"].append(action_str)
+                update_action_history(
+                    meta_data,
+                    args.history_keep_last,
+                    args.history_summary_max_chars,
+                )
 
                 if action["action_type"] == ActionTypes.STOP:
                     break
