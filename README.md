@@ -93,6 +93,19 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/candidate-ranking）
+観測行を目的語に近いものだけに絞る実験機能を追加しました。
+
+使い方:
+```bash
+--candidate_rank_enabled
+--candidate_rank_limit 50
+```
+
+挙動:
+- 観測内の行を目的語と単純一致でスコア付けし、上位だけ保持します。
+- `INPUT/SELECT/BUTTON` は少し優先されます。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.

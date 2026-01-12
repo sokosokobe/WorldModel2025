@@ -145,6 +145,58 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _rank_observation(
+        self,
+        obs: str,
+        objective: str,
+        limit: int,
+    ) -> str:
+        if limit <= 0:
+            return obs
+        if "\n" not in obs:
+            return obs
+        tokens = set(re.findall(r"[a-z0-9]+", objective.lower()))
+        if not tokens:
+            return obs
+
+        lines = obs.splitlines()
+        prefix: list[str] = []
+        content_lines: list[str] = []
+        in_content = False
+        for line in lines:
+            if line.startswith("["):
+                in_content = True
+            if in_content:
+                content_lines.append(line)
+            else:
+                prefix.append(line)
+
+        if len(content_lines) <= limit:
+            return obs
+
+        scored: list[tuple[float, str]] = []
+        for line in content_lines:
+            score = 0.0
+            lower = line.lower()
+            for token in tokens:
+                if token in lower:
+                    score += 1.0
+            match = re.match(r"^\[(.*?)\]\s+\[(.*?)\]\s+\[(.*)\]", line)
+            if match:
+                tag = match.group(2)
+                if tag != "StaticText":
+                    score += 0.1
+                if tag in ("INPUT", "TEXTAREA", "SELECT", "BUTTON"):
+                    score += 0.2
+            scored.append((score, line))
+
+        if not scored or max(s[0] for s in scored) <= 0.0:
+            return obs
+
+        scored.sort(key=lambda x: (-x[0], len(x[1])))
+        top_lines = [line for _, line in scored[:limit]]
+        return "\n".join(prefix + top_lines)
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +230,10 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("candidate_rank_enabled"):
+            obs = self._rank_observation(
+                obs, intent, int(meta_data.get("candidate_rank_limit", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url
@@ -240,6 +296,10 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("candidate_rank_enabled"):
+            obs = self._rank_observation(
+                obs, intent, int(meta_data.get("candidate_rank_limit", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url
@@ -303,6 +363,10 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("candidate_rank_enabled"):
+            obs = self._rank_observation(
+                obs, intent, int(meta_data.get("candidate_rank_limit", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url

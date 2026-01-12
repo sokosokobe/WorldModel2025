@@ -98,6 +98,17 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--candidate_rank_enabled",
+        action="store_true",
+        help="Rank and limit observation lines by objective overlap.",
+    )
+    parser.add_argument(
+        "--candidate_rank_limit",
+        type=int,
+        default=50,
+        help="Max number of observation lines to keep when ranking is enabled.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -322,7 +333,11 @@ def test(
         state_info: StateInfo = {"observation": obs, "info": info}
         trajectory.append(state_info)
 
-        meta_data = {"action_history": ["None"]}
+        meta_data = {
+            "action_history": ["None"],
+            "candidate_rank_enabled": args.candidate_rank_enabled,
+            "candidate_rank_limit": args.candidate_rank_limit,
+        }
         while True:
             early_stop_flag, stop_info = early_stop(
                 trajectory, max_steps, early_stop_thresholds
