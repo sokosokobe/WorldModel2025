@@ -145,6 +145,16 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _format_alignment(self, meta_data: dict[str, Any]) -> str:
+        align: list[dict[str, str]] = meta_data.get("alignment_info", []) or []
+        if not align:
+            return ""
+        lines = [
+            f"[{item.get('id','')}] score={item.get('score','0')} detail={item.get('detail','')}"
+            for item in align
+        ]
+        return "\n".join(lines)
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +188,9 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -239,6 +252,9 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -310,6 +326,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
