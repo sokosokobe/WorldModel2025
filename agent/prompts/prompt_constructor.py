@@ -218,6 +218,9 @@ class DirectPromptConstructor(PromptConstructor):
         alignment = self._format_alignment(meta_data)
         if alignment:
             obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -285,6 +288,9 @@ class CoTPromptConstructor(PromptConstructor):
         alignment = self._format_alignment(meta_data)
         if alignment:
             obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -362,6 +368,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         alignment = self._format_alignment(meta_data)
         if alignment:
             obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url

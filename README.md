@@ -99,17 +99,20 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
-## 変更点（feat/visual-dom-alignment）
-視覚テキストとDOM属性の簡易一致スコアを提示する実験機能を追加しました。
+## 変更点（integrate/hybrid-roi-align-structured-retry）
+以下の実験機能を統合したブランチです（トークン削減と精度向上の両方を狙う構成）。
 
-使い方:
+- Structured tool-use（固定出力フォーマット）
+- ROI element details（`[DETAILS]` で aria/title/class/id 等を付与）
+- Visual-DOM alignment（`[ALIGNMENT]` で簡易一致スコアを付与）
+- Failure-triggered retry（失敗時のみ `[EXTRA OBSERVATION]` を付与）
+
+代表的なフラグ:
 ```bash
---alignment_enabled
---alignment_limit 8
+--roi_detail_enabled --roi_detail_limit 8 --roi_detail_max_chars 200
+--alignment_enabled --alignment_limit 8
+--fail_retry_enabled --fail_retry_max 1 --fail_retry_html_chars 1500
 ```
-
-挙動:
-- SoMテキストと aria/title/alt/class/id の重なりを数えて `ALIGNMENT` を付与します。
 
 
 ## End-to-end Evaluation
