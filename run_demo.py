@@ -57,6 +57,7 @@ from browser_env.helper_functions import (
     RenderHelper,
     get_action_description,
 )
+from llms.utils import call_llm
 from evaluation_harness import image_utils
 
 LOG_FOLDER = "log_files"
@@ -120,6 +121,17 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--planner_enabled",
+        action="store_true",
+        help="Generate a simple subgoal plan before execution.",
+    )
+    parser.add_argument(
+        "--planner_max_steps",
+        type=int,
+        default=5,
+        help="Max number of subgoals to generate.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -210,6 +222,41 @@ def config() -> argparse.Namespace:
         )
 
     return args
+
+
+def generate_subgoal_plan(
+    agent: PromptAgent,
+    objective: str,
+    observation: str,
+    max_steps: int,
+) -> list[str]:
+    obs = observation.replace("\n", " ").strip()
+    if len(obs) > 1200:
+        obs = obs[:1200]
+    system = (
+        "Generate a short, ordered list of subgoals to accomplish the objective."
+    )
+    user = (
+        f"OBJECTIVE: {objective}\n"
+        f"OBSERVATION: {obs}\n\n"
+        f"Return up to {max_steps} subgoals, each on its own line starting with '- '."
+    )
+    if agent.lm_config.mode == "chat":
+        prompt = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ]
+    else:
+        prompt = f"{system}\n\n{user}\n"
+    response = call_llm(agent.lm_config, prompt)
+    steps = []
+    for line in response.splitlines():
+        line = line.strip()
+        if line.startswith("- "):
+            steps.append(line[2:].strip())
+        elif line and line[0].isdigit() and "." in line:
+            steps.append(line.split(".", 1)[1].strip())
+    return steps[:max_steps]
 
 
 @beartype
@@ -344,7 +391,27 @@ def test(
         state_info: StateInfo = {"observation": obs, "info": info}
         trajectory.append(state_info)
 
-        meta_data = {"action_history": ["None"]}
+        plan_steps: list[str] = []
+        if args.planner_enabled and isinstance(agent, PromptAgent):
+            obs_text = ""
+            if isinstance(obs, dict):
+                obs_text = str(obs.get("text", ""))
+            else:
+                obs_text = str(obs)
+            try:
+                plan_steps = generate_subgoal_plan(
+                    agent,
+                    intent,
+                    obs_text,
+                    args.planner_max_steps,
+                )
+            except Exception:
+                plan_steps = []
+
+        meta_data = {
+            "action_history": ["None"],
+            "plan_steps": plan_steps,
+        }
         while True:
             early_stop_flag, stop_info = early_stop(
                 trajectory, max_steps, early_stop_thresholds

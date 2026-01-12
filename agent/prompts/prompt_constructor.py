@@ -145,6 +145,13 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _format_plan(self, meta_data: dict[str, Any]) -> str:
+        plan: list[str] = meta_data.get("plan_steps", []) or []
+        if not plan:
+            return ""
+        lines = [f"{i+1}. {step}" for i, step in enumerate(plan)]
+        return "\n".join(lines)
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +185,9 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        plan_text = self._format_plan(meta_data)
+        if plan_text:
+            obs = f"{obs}\n\n[PLAN]\n{plan_text}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -239,6 +249,9 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        plan_text = self._format_plan(meta_data)
+        if plan_text:
+            obs = f"{obs}\n\n[PLAN]\n{plan_text}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -310,6 +323,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        plan_text = self._format_plan(meta_data)
+        if plan_text:
+            obs = f"{obs}\n\n[PLAN]\n{plan_text}"
 
         page = state_info["info"]["page"]
         url = page.url
