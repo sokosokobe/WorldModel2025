@@ -125,6 +125,18 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--history_keep_last",
+        type=int,
+        default=5,
+        help="Keep last N actions verbatim; older actions are summarized.",
+    )
+    parser.add_argument(
+        "--history_summary_max_chars",
+        type=int,
+        default=600,
+        help="Max chars for the compressed action summary.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -215,6 +227,28 @@ def config() -> argparse.Namespace:
         )
 
     return args
+
+
+def update_action_history(
+    meta_data: dict[str, Any],
+    keep_last: int,
+    max_summary_chars: int,
+) -> None:
+    history = meta_data.get("action_history", [])
+    if keep_last < 1 or len(history) <= keep_last + 1:
+        return
+    summary = meta_data.get("action_history_summary", "")
+    to_summarize = history[1:-keep_last]
+    if to_summarize:
+        new_chunk = " | ".join(
+            [item for item in to_summarize if item and item != "None"]
+        )
+        if new_chunk:
+            summary = f"{summary} | {new_chunk}" if summary else new_chunk
+            if max_summary_chars > 0 and len(summary) > max_summary_chars:
+                summary = summary[-max_summary_chars:]
+            meta_data["action_history_summary"] = summary
+    meta_data["action_history"] = [history[0]] + history[-keep_last:]
 
 
 def early_stop(
@@ -411,7 +445,10 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "action_history_summary": "",
+            }
             while True:
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
@@ -445,6 +482,11 @@ def test(
                     action, state_info, meta_data, args.render_screenshot
                 )
                 meta_data["action_history"].append(action_str)
+                update_action_history(
+                    meta_data,
+                    args.history_keep_last,
+                    args.history_summary_max_chars,
+                )
 
                 if action["action_type"] == ActionTypes.STOP:
                     break
