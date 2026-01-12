@@ -145,6 +145,14 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _previous_action_str(self, meta_data: dict[str, Any]) -> str:
+        history = meta_data.get("action_history", ["None"])
+        previous_action = history[-1] if history else "None"
+        summary = meta_data.get("action_history_summary", "")
+        if summary:
+            return f"Summary: {summary}\nLast: {previous_action}"
+        return previous_action
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -181,7 +189,7 @@ class DirectPromptConstructor(PromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
 
         # input x
         current = template.format(
@@ -243,7 +251,7 @@ class CoTPromptConstructor(PromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),
@@ -306,7 +314,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        previous_action_str = self._previous_action_str(meta_data)
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),

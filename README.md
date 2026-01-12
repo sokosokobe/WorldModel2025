@@ -93,6 +93,19 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/history-summary）
+行動履歴を圧縮してトークン消費を抑える実験機能を追加しました。
+
+使い方:
+```bash
+--history_keep_last 5
+--history_summary_max_chars 600
+```
+
+挙動:
+- 直近N件だけ詳細を保持し、それ以前は `Summary:` に連結します。
+- `PREVIOUS ACTION` には `Summary` と `Last` が入ります。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
