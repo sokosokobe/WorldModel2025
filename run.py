@@ -149,6 +149,23 @@ def config() -> argparse.Namespace:
         default=600,
         help="Max chars for the compressed action summary.",
     )
+    parser.add_argument(
+        "--fail_retry_enabled",
+        action="store_true",
+        help="On action failure, append a short HTML snippet for a retry step.",
+    )
+    parser.add_argument(
+        "--fail_retry_max",
+        type=int,
+        default=1,
+        help="Max times to add failure context per episode.",
+    )
+    parser.add_argument(
+        "--fail_retry_html_chars",
+        type=int,
+        default=1500,
+        help="Max chars of HTML to append on failure.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -296,6 +313,23 @@ def update_action_history(
                 summary = summary[-max_summary_chars:]
             meta_data["action_history_summary"] = summary
     meta_data["action_history"] = [history[0]] + history[-keep_last:]
+
+
+def build_failure_observation(
+    info: dict[str, Any],
+    max_html_chars: int,
+) -> str:
+    fail_error = info.get("fail_error", "")
+    page = info.get("page")
+    html = ""
+    if page and getattr(page, "content", ""):
+        html = page.content
+    html = html.replace("\n", " ").replace("\t", " ").strip()
+    if max_html_chars > 0 and len(html) > max_html_chars:
+        html = html[:max_html_chars]
+    if html:
+        return f"FAIL_ERROR: {fail_error}\nHTML_SNIPPET: {html}"
+    return f"FAIL_ERROR: {fail_error}"
 
 
 def early_stop(
@@ -495,6 +529,8 @@ def test(
             meta_data = {
                 "action_history": ["None"],
                 "action_history_summary": "",
+                "extra_observation": "",
+                "fail_retry_count": 0,
             }
             plan_steps: list[str] = []
             if args.planner_enabled and isinstance(agent, PromptAgent):
@@ -557,6 +593,17 @@ def test(
                     break
 
                 obs, _, terminated, _, info = env.step(action)
+                if args.fail_retry_enabled:
+                    extra_obs = ""
+                    if info.get("fail_error") and (
+                        meta_data["fail_retry_count"] < args.fail_retry_max
+                    ):
+                        extra_obs = build_failure_observation(
+                            info,
+                            args.fail_retry_html_chars,
+                        )
+                        meta_data["fail_retry_count"] += 1
+                    meta_data["extra_observation"] = extra_obs
                 state_info = {"observation": obs, "info": info}
                 trajectory.append(state_info)
 
