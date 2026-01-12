@@ -99,6 +99,20 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/failure-retry）
+アクション失敗時に、短いHTMLスニペットを追加して再試行しやすくする実験機能を追加しました。
+
+使い方:
+```bash
+--fail_retry_enabled
+--fail_retry_max 1
+--fail_retry_html_chars 1500
+```
+
+挙動:
+- `fail_error` があるステップの次回プロンプトに `EXTRA OBSERVATION` を追加します。
+- 追加は最大回数までで、成功時は自動で消えます。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
