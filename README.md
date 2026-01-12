@@ -93,6 +93,18 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/hierarchical-plan）
+実行前にサブゴール計画を生成して、プロンプトに渡す実験機能を追加しました。
+
+使い方:
+```bash
+--planner_enabled
+--planner_max_steps 5
+```
+
+挙動:
+- 初期観測と目的からサブゴール列を生成し、`[PLAN]` として観測末尾に付与します。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
