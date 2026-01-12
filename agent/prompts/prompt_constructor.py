@@ -145,6 +145,30 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _previous_action_str(self, meta_data: dict[str, Any]) -> str:
+        history = meta_data.get("action_history", ["None"])
+        previous_action = history[-1] if history else "None"
+        summary = meta_data.get("action_history_summary", "")
+        if summary:
+            return f"Summary: {summary}\nLast: {previous_action}"
+        return previous_action
+
+    def _format_element_details(self, meta_data: dict[str, Any]) -> str:
+        details: list[dict[str, str]] = meta_data.get("element_details", []) or []
+        if not details:
+            return ""
+        fields = ["tag", "text", "aria_label", "title", "class", "dom_id", "alt"]
+        lines = []
+        for detail in details:
+            element_id = detail.get("id", "")
+            parts = []
+            for field in fields:
+                value = detail.get(field, "")
+                if value:
+                    parts.append(f"{field}={value}")
+            joined = "; ".join(parts)
+            lines.append(f"[{element_id}] {joined}".strip())
+        return "\n".join(lines)
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +202,9 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        details = self._format_element_details(meta_data)
+        if details:
+            obs = f"{obs}\n\n[DETAILS]\n{details}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -239,6 +266,9 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        details = self._format_element_details(meta_data)
+        if details:
+            obs = f"{obs}\n\n[DETAILS]\n{details}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -310,6 +340,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        details = self._format_element_details(meta_data)
+        if details:
+            obs = f"{obs}\n\n[DETAILS]\n{details}"
 
         page = state_info["info"]["page"]
         url = page.url
