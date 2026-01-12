@@ -145,6 +145,24 @@ class PromptConstructor(object):
         response = self.map_url_to_local(response)
         return response
 
+    def _brief_observation(self, obs: str, max_lines: int) -> str:
+        if max_lines <= 0 or "\n" not in obs:
+            return obs
+        lines = obs.splitlines()
+        prefix: list[str] = []
+        content: list[str] = []
+        in_content = False
+        for line in lines:
+            if line.startswith("["):
+                in_content = True
+            if in_content:
+                content.append(line)
+            else:
+                prefix.append(line)
+        if len(content) <= max_lines:
+            return obs
+        return "\n".join(prefix + content[:max_lines])
+
 
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
@@ -178,6 +196,10 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("observation_stage") == "brief":
+            obs = self._brief_observation(
+                obs, int(meta_data.get("brief_max_lines", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url
@@ -240,6 +262,10 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("observation_stage") == "brief":
+            obs = self._brief_observation(
+                obs, int(meta_data.get("brief_max_lines", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url
@@ -303,6 +329,10 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        if meta_data.get("observation_stage") == "brief":
+            obs = self._brief_observation(
+                obs, int(meta_data.get("brief_max_lines", 0))
+            )
 
         page = state_info["info"]["page"]
         url = page.url

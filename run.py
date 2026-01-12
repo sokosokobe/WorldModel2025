@@ -103,6 +103,23 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--two_stage_obs_enabled",
+        action="store_true",
+        help="Use brief observations for early steps, then full observations.",
+    )
+    parser.add_argument(
+        "--two_stage_steps",
+        type=int,
+        default=3,
+        help="Number of initial steps to use brief observations.",
+    )
+    parser.add_argument(
+        "--two_stage_brief_lines",
+        type=int,
+        default=40,
+        help="Max observation lines during brief stage.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -389,8 +406,19 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "observation_stage": "full",
+                "brief_max_lines": args.two_stage_brief_lines,
+            }
             while True:
+                if args.two_stage_obs_enabled:
+                    step_idx = max(0, len(meta_data["action_history"]) - 1)
+                    meta_data["observation_stage"] = (
+                        "brief"
+                        if step_idx < args.two_stage_steps
+                        else "full"
+                    )
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
                 )

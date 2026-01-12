@@ -93,6 +93,19 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/two-stage-observation）
+観測を「短い要約→全量」の2段階にする実験機能を追加しました。
+
+使い方:
+```bash
+--two_stage_obs_enabled
+--two_stage_steps 3
+--two_stage_brief_lines 40
+```
+
+挙動:
+- 最初のNステップだけ観測行を制限し、以降は通常観測に戻します。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
