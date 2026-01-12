@@ -205,6 +205,9 @@ class DirectPromptConstructor(PromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -269,6 +272,9 @@ class CoTPromptConstructor(PromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -343,6 +349,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
