@@ -93,6 +93,18 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/self-correction）
+失敗時に保守的な回復アクションを自動挿入する実験機能を追加しました。
+
+使い方:
+```bash
+--self_correct_enabled
+--self_correct_max 2
+```
+
+挙動:
+- 失敗が発生すると `scroll`/`go_back` を挿入して再探索します。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.

@@ -30,6 +30,8 @@ from browser_env import (
     ScriptBrowserEnv,
     StateInfo,
     Trajectory,
+    create_go_back_action,
+    create_scroll_action,
     create_stop_action,
 )
 from browser_env.actions import is_equivalent
@@ -103,6 +105,17 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--self_correct_enabled",
+        action="store_true",
+        help="Insert a recovery action when the previous step fails.",
+    )
+    parser.add_argument(
+        "--self_correct_max",
+        type=int,
+        default=2,
+        help="Max number of self-correction actions per episode.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -193,6 +206,20 @@ def config() -> argparse.Namespace:
         )
 
     return args
+
+
+def choose_recovery_action(fail_count: int, fail_error: str) -> Action:
+    """Pick a conservative recovery action after a failed step."""
+    if "timeout" in fail_error.lower() or "not visible" in fail_error.lower():
+        direction = "down" if fail_count % 2 == 0 else "up"
+        return create_scroll_action(direction)
+    if "no proper locator" in fail_error.lower():
+        direction = "down" if fail_count % 2 == 0 else "up"
+        return create_scroll_action(direction)
+    if "navigation" in fail_error.lower():
+        return create_go_back_action()
+    direction = "down" if fail_count % 2 == 0 else "up"
+    return create_scroll_action(direction)
 
 
 def early_stop(
@@ -389,7 +416,11 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "pending_recovery_action": None,
+                "self_correct_count": 0,
+            }
             while True:
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
@@ -399,12 +430,19 @@ def test(
                     action = create_stop_action(f"Early stop: {stop_info}")
                 else:
                     try:
-                        action = agent.next_action(
-                            trajectory,
-                            intent,
-                            images=images,
-                            meta_data=meta_data,
-                        )
+                        if (
+                            args.self_correct_enabled
+                            and meta_data["pending_recovery_action"] is not None
+                        ):
+                            action = meta_data["pending_recovery_action"]
+                            meta_data["pending_recovery_action"] = None
+                        else:
+                            action = agent.next_action(
+                                trajectory,
+                                intent,
+                                images=images,
+                                meta_data=meta_data,
+                            )
                     except ValueError as e:
                         # get the error message
                         action = create_stop_action(f"ERROR: {str(e)}")
@@ -428,6 +466,16 @@ def test(
                     break
 
                 obs, _, terminated, _, info = env.step(action)
+                if (
+                    args.self_correct_enabled
+                    and info.get("fail_error")
+                    and meta_data["self_correct_count"] < args.self_correct_max
+                ):
+                    meta_data["pending_recovery_action"] = choose_recovery_action(
+                        meta_data["self_correct_count"],
+                        info["fail_error"],
+                    )
+                    meta_data["self_correct_count"] += 1
                 state_info = {"observation": obs, "info": info}
                 trajectory.append(state_info)
 
