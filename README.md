@@ -99,7 +99,10 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
-## 変更点（feat/hierarchical-plan）
+## 変更点（integrate/plan-structured-history）
+`feat/hierarchical-plan` と `feat/history-summary` を統合したブランチです。
+
+### サブゴール計画（hierarchical plan）
 実行前にサブゴール計画を生成して、プロンプトに渡す実験機能を追加しました。
 
 使い方:
@@ -110,6 +113,19 @@ python run.py \
 
 挙動:
 - 初期観測と目的からサブゴール列を生成し、`[PLAN]` として観測末尾に付与します。
+
+### 行動履歴の圧縮（history summary）
+行動履歴を圧縮してトークン消費を抑える実験機能を追加しました。
+
+使い方:
+```bash
+--history_keep_last 5
+--history_summary_max_chars 600
+```
+
+挙動:
+- 直近N件だけ詳細を保持し、それ以前は `Summary:` に連結します。
+- `PREVIOUS ACTION` には `Summary` と `Last` が入ります。
 
 
 ## End-to-end Evaluation
