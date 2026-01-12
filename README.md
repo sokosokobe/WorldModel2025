@@ -93,6 +93,19 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/roi-ocr-dom）
+要素単位のDOM属性を抽出して、上位候補にだけ詳細を付与する実験機能を追加しました。
+
+使い方:
+```bash
+--roi_detail_enabled
+--roi_detail_limit 8
+--roi_detail_max_chars 200
+```
+
+挙動:
+- 目的語に近い要素IDを選び、`[DETAILS]` に aria/title/class/id などを付けます。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.
