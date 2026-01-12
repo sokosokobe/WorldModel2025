@@ -99,6 +99,18 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
+## 変更点（feat/visual-dom-alignment）
+視覚テキストとDOM属性の簡易一致スコアを提示する実験機能を追加しました。
+
+使い方:
+```bash
+--alignment_enabled
+--alignment_limit 8
+```
+
+挙動:
+- SoMテキストと aria/title/alt/class/id の重なりを数えて `ALIGNMENT` を付与します。
+
 
 ## End-to-end Evaluation
 1. Setup the standalone environments.

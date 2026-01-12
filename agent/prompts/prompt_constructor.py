@@ -170,6 +170,16 @@ class PromptConstructor(object):
             lines.append(f"[{element_id}] {joined}".strip())
         return "\n".join(lines)
 
+    def _format_alignment(self, meta_data: dict[str, Any]) -> str:
+        align: list[dict[str, str]] = meta_data.get("alignment_info", []) or []
+        if not align:
+            return ""
+        lines = [
+            f"[{item.get('id','')}] score={item.get('score','0')} detail={item.get('detail','')}"
+            for item in align
+        ]
+        return "\n".join(lines)
+
 class DirectPromptConstructor(PromptConstructor):
     """The agent will direct predict the action"""
 
@@ -205,6 +215,9 @@ class DirectPromptConstructor(PromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -269,6 +282,9 @@ class CoTPromptConstructor(PromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -343,6 +359,9 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         details = self._format_element_details(meta_data)
         if details:
             obs = f"{obs}\n\n[DETAILS]\n{details}"
+        alignment = self._format_alignment(meta_data)
+        if alignment:
+            obs = f"{obs}\n\n[ALIGNMENT]\n{alignment}"
 
         page = state_info["info"]["page"]
         url = page.url
