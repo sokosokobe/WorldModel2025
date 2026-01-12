@@ -50,6 +50,8 @@ from browser_env import (
     ScriptBrowserEnv,
     StateInfo,
     Trajectory,
+    create_go_back_action,
+    create_scroll_action,
     create_stop_action,
 )
 from browser_env.actions import is_equivalent
@@ -136,6 +138,17 @@ def config() -> argparse.Namespace:
         type=int,
         default=1500,
         help="Max chars of HTML to append on failure.",
+    )
+    parser.add_argument(
+        "--self_correct_enabled",
+        action="store_true",
+        help="Insert a recovery action when the previous step fails.",
+    )
+    parser.add_argument(
+        "--self_correct_max",
+        type=int,
+        default=2,
+        help="Max number of self-correction actions per episode.",
     )
 
     # agent config
@@ -244,6 +257,20 @@ def build_failure_observation(
     if html:
         return f"FAIL_ERROR: {fail_error}\nHTML_SNIPPET: {html}"
     return f"FAIL_ERROR: {fail_error}"
+
+
+def choose_recovery_action(fail_count: int, fail_error: str) -> Action:
+    """Pick a conservative recovery action after a failed step."""
+    if "timeout" in fail_error.lower() or "not visible" in fail_error.lower():
+        direction = "down" if fail_count % 2 == 0 else "up"
+        return create_scroll_action(direction)
+    if "no proper locator" in fail_error.lower():
+        direction = "down" if fail_count % 2 == 0 else "up"
+        return create_scroll_action(direction)
+    if "navigation" in fail_error.lower():
+        return create_go_back_action()
+    direction = "down" if fail_count % 2 == 0 else "up"
+    return create_scroll_action(direction)
 
 
 @beartype
@@ -382,6 +409,8 @@ def test(
             "action_history": ["None"],
             "extra_observation": "",
             "fail_retry_count": 0,
+            "pending_recovery_action": None,
+            "self_correct_count": 0,
         }
         while True:
             early_stop_flag, stop_info = early_stop(
@@ -394,13 +423,20 @@ def test(
                 try:
                     print('=' * 30)
                     print('Agent: Thinking...')
-                    action = agent.next_action(
-                        trajectory,
-                        intent,
-                        images=images,
-                        meta_data=meta_data,
-                        output_response=True
-                    )
+                    if (
+                        args.self_correct_enabled
+                        and meta_data["pending_recovery_action"] is not None
+                    ):
+                        action = meta_data["pending_recovery_action"]
+                        meta_data["pending_recovery_action"] = None
+                    else:
+                        action = agent.next_action(
+                            trajectory,
+                            intent,
+                            images=images,
+                            meta_data=meta_data,
+                            output_response=True
+                        )
                 except ValueError as e:
                     # get the error message
                     action = create_stop_action(f"ERROR: {str(e)}")
@@ -435,6 +471,16 @@ def test(
                     )
                     meta_data["fail_retry_count"] += 1
                 meta_data["extra_observation"] = extra_obs
+            if (
+                args.self_correct_enabled
+                and info.get("fail_error")
+                and meta_data["self_correct_count"] < args.self_correct_max
+            ):
+                meta_data["pending_recovery_action"] = choose_recovery_action(
+                    meta_data["self_correct_count"],
+                    info["fail_error"],
+                )
+                meta_data["self_correct_count"] += 1
             state_info = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
