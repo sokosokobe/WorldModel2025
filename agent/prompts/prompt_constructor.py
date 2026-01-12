@@ -186,6 +186,12 @@ class DirectPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -247,6 +253,12 @@ class CoTPromptConstructor(PromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
@@ -318,6 +330,12 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
+        extra_obs = meta_data.get("extra_observation", "")
+        if extra_obs:
+            obs = f"{obs}\n\n[EXTRA OBSERVATION]\n{extra_obs}"
 
         page = state_info["info"]["page"]
         url = page.url
