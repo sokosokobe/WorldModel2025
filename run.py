@@ -103,6 +103,17 @@ def config() -> argparse.Namespace:
     parser.add_argument("--sleep_after_execution", type=float, default=0.0)
 
     parser.add_argument("--max_steps", type=int, default=30)
+    parser.add_argument(
+        "--alignment_enabled",
+        action="store_true",
+        help="Attach simple visual-to-DOM alignment scores.",
+    )
+    parser.add_argument(
+        "--alignment_limit",
+        type=int,
+        default=8,
+        help="Max number of alignment entries to include.",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -193,6 +204,54 @@ def config() -> argparse.Namespace:
         )
 
     return args
+
+
+def build_alignment_info(
+    state_info: StateInfo,
+    limit: int,
+) -> list[dict[str, str]]:
+    if limit <= 0:
+        return []
+    obs = state_info["observation"]
+    obs_text = obs.get("text", "") if isinstance(obs, dict) else ""
+    meta = state_info["info"].get("observation_metadata", {})
+    image_meta = meta.get("image", {})
+    details_map: dict[str, dict[str, str]] = image_meta.get("som_id_details", {}) or {}
+    tokens_cache: dict[str, set[str]] = {}
+
+    def _tokens(text: str) -> set[str]:
+        if text not in tokens_cache:
+            tokens_cache[text] = set(re.findall(r"[a-z0-9]+", text.lower()))
+        return tokens_cache[text]
+
+    scored: list[tuple[int, str, str]] = []
+    for line in obs_text.splitlines():
+        match = re.match(r"^\\[(\\d+)\\]\\s+\\[(.*?)\\]\\s+\\[(.*)\\]", line)
+        if not match:
+            continue
+        element_id, _tag, text = match.groups()
+        detail = details_map.get(element_id, {})
+        detail_text = " ".join(
+            [
+                detail.get("aria_label", ""),
+                detail.get("title", ""),
+                detail.get("alt", ""),
+                detail.get("dom_id", ""),
+                detail.get("class", ""),
+            ]
+        ).strip()
+        if not detail_text:
+            continue
+        overlap = len(_tokens(text) & _tokens(detail_text))
+        scored.append((overlap, element_id, detail_text))
+
+    scored.sort(key=lambda x: (-x[0], int(x[1])))
+    results: list[dict[str, str]] = []
+    for overlap, element_id, detail_text in scored[:limit]:
+        results.append(
+            {"id": element_id, "score": str(overlap), "detail": detail_text}
+        )
+    return results
 
 
 def early_stop(
@@ -389,8 +448,18 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "alignment_info": [],
+            }
             while True:
+                if args.alignment_enabled:
+                    meta_data["alignment_info"] = build_alignment_info(
+                        state_info,
+                        args.alignment_limit,
+                    )
+                else:
+                    meta_data["alignment_info"] = []
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
                 )
