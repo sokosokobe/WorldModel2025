@@ -132,6 +132,29 @@ def config() -> argparse.Namespace:
         default=600,
         help="Max chars for the compressed action summary.",
     )
+    parser.add_argument(
+        "--compression_enabled",
+        action="store_true",
+        help="Enable observation compression with a simple scorer.",
+    )
+    parser.add_argument(
+        "--compression_limit",
+        type=int,
+        default=60,
+        help="Max number of observation lines to keep when compression is enabled.",
+    )
+    parser.add_argument(
+        "--compression_weights_path",
+        type=str,
+        default="",
+        help="Optional JSON weights for compression scorer.",
+    )
+    parser.add_argument(
+        "--compression_log_path",
+        type=str,
+        default="",
+        help="Optional path to log compression training examples (jsonl).",
+    )
 
     # agent config
     parser.add_argument("--agent_type", type=str, default="prompt")
@@ -381,6 +404,10 @@ def test(
         meta_data = {
             "action_history": ["None"],
             "action_history_summary": "",
+            "compression_enabled": args.compression_enabled,
+            "compression_limit": args.compression_limit,
+            "compression_weights_path": args.compression_weights_path,
+            "compression_log_path": args.compression_log_path,
         }
         while True:
             early_stop_flag, stop_info = early_stop(
