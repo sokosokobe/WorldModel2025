@@ -91,6 +91,12 @@ python run.py \
 ```
 出力: `result_shopping_test/render_0.html`。
 
+#### 環境変数を `.env` にまとめる（おすすめ）
+毎回 `export ...` を打つ代わりに、`.env.example` を `.env` にコピーして値を埋めてください（`.env` は `.gitignore` 済み）。
+
+- `run.py` / `run_demo.py` は起動時に `.env` を自動で読み込みます（既にexport済みの値は上書きしません）。
+- 別ファイルを使う場合は `VWA_ENV_FILE=/path/to/file.env` を指定できます。
+
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
 ## 変更点（feat/hierarchical-plan）
