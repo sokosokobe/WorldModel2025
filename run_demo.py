@@ -11,6 +11,28 @@ import time
 import tempfile
 from pathlib import Path
 
+def _load_dotenv() -> None:
+    env_path = os.environ.get("VWA_ENV_FILE") or ".env"
+    if not os.path.exists(env_path):
+        return
+    try:
+        with open(env_path, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip("'").strip('"')
+                if not key or key in os.environ:
+                    continue
+                os.environ[key] = value
+    except OSError:
+        return
+
+
+_load_dotenv()
+
 import openai
 import requests
 import torch
