@@ -1,0 +1,134 @@
+[Config file]: /var/folders/j2/07s0jkw93sgdjzbg8200_34r0000gn/T/tmp8pisiwh2
+[Unhandled Error] TypeError("MultimodalCoTPromptConstructor.construct() missing 1 required positional argument: 'images'")
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/run_demo.py", line 337, in test
+    action = agent.next_action(
+             ^^^^^^^^^^^^^^^^^^
+  File "<@beartype(agent.agent.PromptAgent.next_action) at 0x16cfab920>", line 135, in next_action
+  File "/Users/sokosokobe/Codes/visualwebarena/agent/agent.py", line 162, in next_action
+    prompt = self.prompt_constructor.construct(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: MultimodalCoTPromptConstructor.construct() missing 1 required positional argument: 'images'
+[Config file]: /var/folders/j2/07s0jkw93sgdjzbg8200_34r0000gn/T/tmpyndwga0g
+[Unhandled Error] Exception('Maximum number of retries (3) exceeded.')
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 43, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 257, in generate_from_openai_chat_completion
+    response = client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_utils/_utils.py", line 299, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/resources/chat/completions.py", line 598, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 1063, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 842, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 885, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "Invalid 'messages[1]'. Image URLs are only allowed for messages with role 'user', but this message with role 'system' contains an image URL.", 'type': 'invalid_request_error', 'param': 'messages[1]', 'code': 'invalid_value'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/run_demo.py", line 337, in test
+    action = agent.next_action(
+             ^^^^^^^^^^^^^^^^^^
+  File "<@beartype(agent.agent.PromptAgent.next_action) at 0x1733ab7e0>", line 135, in next_action
+  File "/Users/sokosokobe/Codes/visualwebarena/agent/agent.py", line 171, in next_action
+    response = call_llm(lm_config, prompt)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/utils.py", line 28, in call_llm
+    response = generate_from_openai_chat_completion(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 52, in wrapper
+    raise Exception(
+Exception: Maximum number of retries (3) exceeded.
+[Config file]: /var/folders/j2/07s0jkw93sgdjzbg8200_34r0000gn/T/tmpc5483xg0
+[Unhandled Error] Exception('Maximum number of retries (3) exceeded.')
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 47, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 262, in generate_from_openai_chat_completion
+    response = client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_utils/_utils.py", line 299, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/resources/chat/completions.py", line 598, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 1063, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 842, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 885, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "Invalid 'messages[1]'. Image URLs are only allowed for messages with role 'user', but this message with role 'system' contains an image URL.", 'type': 'invalid_request_error', 'param': 'messages[1]', 'code': 'invalid_value'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/run_demo.py", line 337, in test
+    action = agent.next_action(
+             ^^^^^^^^^^^^^^^^^^
+  File "<@beartype(agent.agent.PromptAgent.next_action) at 0x319bcb920>", line 135, in next_action
+  File "/Users/sokosokobe/Codes/visualwebarena/agent/agent.py", line 171, in next_action
+    response = call_llm(lm_config, prompt)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/utils.py", line 28, in call_llm
+    response = generate_from_openai_chat_completion(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 56, in wrapper
+    raise Exception(
+Exception: Maximum number of retries (3) exceeded.
+[Config file]: /var/folders/j2/07s0jkw93sgdjzbg8200_34r0000gn/T/tmprbjm6via
+[Unhandled Error] Exception('Maximum number of retries (3) exceeded.')
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 47, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 263, in generate_from_openai_chat_completion
+    response = client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_utils/_utils.py", line 299, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/resources/chat/completions.py", line 598, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 1063, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 842, in request
+    return self._request(
+           ^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/miniforge3/envs/vwa/lib/python3.11/site-packages/openai/_base_client.py", line 885, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "Invalid 'messages[1]'. Image URLs are only allowed for messages with role 'user', but this message with role 'system' contains an image URL.", 'type': 'invalid_request_error', 'param': 'messages[1]', 'code': 'invalid_value'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/sokosokobe/Codes/visualwebarena/run_demo.py", line 337, in test
+    action = agent.next_action(
+             ^^^^^^^^^^^^^^^^^^
+  File "<@beartype(agent.agent.PromptAgent.next_action) at 0x3194ab920>", line 135, in next_action
+  File "/Users/sokosokobe/Codes/visualwebarena/agent/agent.py", line 171, in next_action
+    response = call_llm(lm_config, prompt)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/utils.py", line 28, in call_llm
+    response = generate_from_openai_chat_completion(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sokosokobe/Codes/visualwebarena/llms/providers/openai_utils.py", line 57, in wrapper
+    raise Exception(
+Exception: Maximum number of retries (3) exceeded.

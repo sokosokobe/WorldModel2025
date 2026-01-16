@@ -12,8 +12,12 @@ import aiolimiter
 import openai
 from openai import AsyncOpenAI, OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL"))
-aclient = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL"))
+client = OpenAI(
+    api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL")
+)
+aclient = AsyncOpenAI(
+    api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL")
+)
 from tqdm.asyncio import tqdm_asyncio
 
 
@@ -44,6 +48,7 @@ def retry_with_exponential_backoff(  # type: ignore
 
             # Retry on specified errors
             except errors as e:
+                print(f"DEBUG: 発生したエラー詳細 -> {e}")
                 # Increment retries
                 num_retries += 1
 
@@ -61,6 +66,7 @@ def retry_with_exponential_backoff(  # type: ignore
 
             # Raise exceptions for any errors not specified
             except Exception as e:
+                print(f"DEBUG: 発生したエラー詳細 -> {e}")
                 raise e
 
     return wrapper
@@ -254,6 +260,16 @@ def generate_from_openai_chat_completion(
         raise ValueError(
             "OPENAI_API_KEY environment variable must be set when using OpenAI API."
         )
+
+    # --- 【修正用コード開始】 画像を含むsystemメッセージをuserに変更 ---
+    for msg in messages:
+        if msg.get("role") == "system" and isinstance(msg.get("content"), list):
+            for item in msg["content"]:
+                if isinstance(item, dict) and item.get("type") == "image_url":
+                    msg["role"] = "user"  # 画像があれば強制的にuserロールにする
+                    break
+    # --- 【修正用コード終了】 ---
+
     response = client.chat.completions.create(
         model=model,
         messages=messages,
