@@ -567,10 +567,12 @@ def test(
 
 
 def prepare(args: argparse.Namespace) -> None:
-    # convert prompt python files to json
-    from agent.prompts import to_json
+    # Convert prompt python files to json only when explicitly requested.
+    # By default, avoid overwriting tracked json prompt files (it makes git dirty).
+    if os.environ.get("VWA_CONVERT_PROMPTS") == "1":
+        from agent.prompts import to_json
 
-    to_json.run()
+        to_json.run()
 
     # prepare result dir
     result_dir = args.result_dir
