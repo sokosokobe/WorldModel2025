@@ -99,8 +99,8 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
-## 変更点（integrate/plan-structured-history）
-`feat/hierarchical-plan` と `feat/history-summary` を統合したブランチです。
+## 変更点（integrate/plan-structured-history-retry）
+`integrate/plan-structured-history` に `feat/failure-retry`（失敗時のみ追加観測）を統合したブランチです。
 
 ### サブゴール計画（hierarchical plan）
 実行前にサブゴール計画を生成して、プロンプトに渡す実験機能を追加しました。
@@ -126,6 +126,20 @@ python run.py \
 挙動:
 - 直近N件だけ詳細を保持し、それ以前は `Summary:` に連結します。
 - `PREVIOUS ACTION` には `Summary` と `Last` が入ります。
+
+### 失敗時の局所リトライ補助（failure retry）
+アクション失敗時に、短いHTMLスニペットを追加して再試行しやすくする実験機能を追加しました。
+
+使い方:
+```bash
+--fail_retry_enabled
+--fail_retry_max 1
+--fail_retry_html_chars 1500
+```
+
+挙動:
+- `fail_error` があるステップの次回プロンプトに `EXTRA OBSERVATION` を追加します。
+- 追加は最大回数までで、成功時は自動で消えます。
 
 
 ## End-to-end Evaluation
