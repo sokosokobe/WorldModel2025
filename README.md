@@ -264,9 +264,9 @@ If you find our environment or our models useful, please consider citing <a href
 Our code is heavily based off the <a href="https://github.com/web-arena-x/webarena">WebArena codebase</a>.
 
 <!-- integrate-components:start -->
-  ## ブランチ構成（統合元）
-  この `integrate/*` ブランチは、以下の機能ブランチ（/変更群）を統合したものです。
-  - `feat/history-summary`
+## ブランチ構成（統合元）
+この `integrate/*` ブランチは、以下の機能ブランチ（/変更群）を統合したものです。
+- `feat/history-summary`
 - `feat/learned-compression`（学習可能な観測圧縮の足場）
 - （注）`protocol/structured-tooluse` は未統合（トークン削減寄り）
-  <!-- integrate-components:end -->
+<!-- integrate-components:end -->
