@@ -99,19 +99,18 @@ python run.py \
 
 任意: 容量節約のため、`evaluation_harness/image_utils.py` でキャプションモデルを空返しにして無効化可能です。
 
-## 変更点（feat/failure-retry）
-アクション失敗時に、短いHTMLスニペットを追加して再試行しやすくする実験機能を追加しました。
+## 変更点（integrate/acc-structured-retry-roi）
+精度寄りの機能を中心に統合したブランチです。
 
-使い方:
+- Structured tool-use（固定出力フォーマット）
+- ROI element details（`[DETAILS]` で aria/title/class/id 等を付与）
+- Failure-triggered retry（失敗時のみ `[EXTRA OBSERVATION]` を付与）
+
+代表的なフラグ:
 ```bash
---fail_retry_enabled
---fail_retry_max 1
---fail_retry_html_chars 1500
+--roi_detail_enabled --roi_detail_limit 8 --roi_detail_max_chars 200
+--fail_retry_enabled --fail_retry_max 1 --fail_retry_html_chars 1500
 ```
-
-挙動:
-- `fail_error` があるステップの次回プロンプトに `EXTRA OBSERVATION` を追加します。
-- 追加は最大回数までで、成功時は自動で消えます。
 
 
 ## End-to-end Evaluation
