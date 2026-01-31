@@ -249,3 +249,10 @@ If you find our environment or our models useful, please consider citing <a href
 ## Acknowledgements
 
 Our code is heavily based off the <a href="https://github.com/web-arena-x/webarena">WebArena codebase</a>.
+
+<!-- integrate-components:start -->
+  ## ブランチ構成（統合元）
+  この `integrate/*` ブランチは、以下の機能ブランチ（/変更群）を統合したものです。
+  - （共通土台）`.env` ロード（任意）
+- （共通土台）`VWA_CONVERT_PROMPTS=1` のときのみ `.py → .json` 変換
+  <!-- integrate-components:end -->
