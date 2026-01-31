@@ -264,8 +264,8 @@ If you find our environment or our models useful, please consider citing <a href
 Our code is heavily based off the <a href="https://github.com/web-arena-x/webarena">WebArena codebase</a>.
 
 <!-- integrate-components:start -->
-  ## ブランチ構成（統合元）
-  この `integrate/*` ブランチは、以下の機能ブランチ（/変更群）を統合したものです。
-  - `protocol/structured-tooluse`
+## ブランチ構成（統合元）
+この `integrate/*` ブランチは、以下の機能ブランチ（/変更群）を統合したものです。
+- `protocol/structured-tooluse`
 - `feat/history-summary`
-  <!-- integrate-components:end -->
+<!-- integrate-components:end -->
