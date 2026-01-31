@@ -17,6 +17,26 @@ aclient = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.
 from tqdm.asyncio import tqdm_asyncio
 
 
+def _get_openai_seed() -> int | None:
+    """Return a stable seed for OpenAI requests.
+
+    Defaults to 0 to make runs reproducible across branches, unless explicitly disabled.
+    """
+    if os.environ.get("VWA_DISABLE_OPENAI_SEED") == "1":
+        return None
+    raw = os.environ.get("VWA_OPENAI_SEED") or os.environ.get("OPENAI_SEED")
+    if raw is None:
+        return 0
+    try:
+        return int(raw)
+    except ValueError:
+        logging.warning(
+            f"Invalid seed value {raw!r}; falling back to seed=0. "
+            "Set VWA_DISABLE_OPENAI_SEED=1 to disable seeding."
+        )
+        return 0
+
+
 def retry_with_exponential_backoff(  # type: ignore
     func,
     initial_delay: float = 1,
@@ -176,13 +196,24 @@ async def _throttled_openai_chat_completion_acreate(
     async with limiter:
         for _ in range(3):
             try:
-                return await aclient.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                )
+                kwargs: dict[str, Any] = {
+                    "model": model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": max_tokens,
+                    "top_p": top_p,
+                }
+                seed = _get_openai_seed()
+                if seed is not None:
+                    kwargs["seed"] = seed
+                try:
+                    return await aclient.chat.completions.create(**kwargs)
+                except openai.BadRequestError as e:
+                    # Backwards compatibility: some servers/models may not support `seed`.
+                    if seed is not None and "seed" in str(e).lower():
+                        kwargs.pop("seed", None)
+                        return await aclient.chat.completions.create(**kwargs)
+                    raise
             except openai.RateLimitError:
                 logging.warning(
                     "OpenAI API rate limit exceeded. Sleeping for 10 seconds."
@@ -274,13 +305,25 @@ def generate_from_openai_chat_completion(
             m["role"] = "user"
         fixed_messages.append(m)
     messages = fixed_messages
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        top_p=top_p,
-    )
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "top_p": top_p,
+    }
+    seed = _get_openai_seed()
+    if seed is not None:
+        kwargs["seed"] = seed
+    try:
+        response = client.chat.completions.create(**kwargs)
+    except openai.BadRequestError as e:
+        # Backwards compatibility: some servers/models may not support `seed`.
+        if seed is not None and "seed" in str(e).lower():
+            kwargs.pop("seed", None)
+            response = client.chat.completions.create(**kwargs)
+        else:
+            raise
     answer: str = response.choices[0].message.content
     return answer
 
