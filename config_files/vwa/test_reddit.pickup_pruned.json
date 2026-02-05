@@ -1,0 +1,358 @@
+[
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 76,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/funny/125907",
+    "geolocation": null,
+    "intent_template": "{{question}}? {{action}} and create a comment with the following format: {{comment_format}}.",
+    "intent": "How much money does the person have? Downvote the post and create a comment with the following format: \"This is a <amount of money (in digits only)> bill from <country>.\" (not including the double inverted commas), replacing <amount of money> with the actual amount of money the person has and <country> with the country that issue the bill.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "How much money does the person have",
+      "action": "Downvote the post",
+      "comment_format": "\"This is a <amount of money (in digits only)> bill from <country>.\" (not including the double inverted commas), replacing <amount of money> with the actual amount of money the person has and <country> with the country that issue the bill"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": null,
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/funny/125907",
+          "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "must_include": [
+              "vote vote--user-downvoted"
+            ]
+          }
+        },
+        {
+          "url": "__REDDIT__/f/funny/125907",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "must_include": [
+              "This is a 20000000000 bill from Zimbabwe. |OR| This is a 20,000,000,000 bill from Zimbabwe."
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 32,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "__REDDIT__/f/funny/125907"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 104,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/memes/21059",
+    "geolocation": null,
+    "intent_template": "{{question}}? Leave a comment replying to user \"{{user}}\" with the following format: {{format}}.",
+    "intent": "How many kirbies are in the picture? Leave a comment replying to user \"Valenyn\" with the following format: \"There are <number of kirbies> kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*\" (not including the quote marks), replacing <number of kirbies> with the actual number of kirbies. Remember to use digits.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "How many kirbies are in the picture",
+      "user": "Valenyn",
+      "format": "\"There are <number of kirbies> kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*\" (not including the quote marks), replacing <number of kirbies> with the actual number of kirbies. Remember to use digits"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/memes/21059",
+          "locator": "func:reddit_get_parent_comment_username_of_latest_comment_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "Valenyn"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/MechanicalKeyboards/56362",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "There are 3 kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*"
+          }
+        }
+      ]
+    },
+    "intent_template_id": 41,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": ""
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 154,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "{{intro}}. Can you tell me {{information}}?{{action}}",
+    "intent": "I think I saw a post in f/DataIsBeautiful that talked about the price of training ImageNet models. Can you tell me how much it cost in 2020 was to train a top-5 model with >93% accuracy? Finally, take me to the comments section of the post.",
+    "instantiation_dict": {
+      "intro": "I think I saw a post in f/DataIsBeautiful that talked about the price of training ImageNet models",
+      "information": "how much it cost in 2020 was to train a top-5 model with >93% accuracy",
+      "action": " Finally, take me to the comments section of the post."
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match",
+        "url_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "7.43"
+        ]
+      },
+      "reference_url": "__REDDIT__/f/dataisbeautiful/103920",
+      "url_note": "GOLD in PRED",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "$7.43"
+    },
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "__REDDIT__/f/dataisbeautiful/103920/oc-the-cost-of-training-ai-on-imagenet-has-decreased-from",
+    "intent_template_id": 62
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 73,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find a post in {{forum}} that {{description}}. Then, repost the picture to {{forum2}} with {{characteristic}}. Finally, {{action}}.",
+    "intent": "Find a post in f/MechanicalKeyboards that contains a special keyboard that has a huge W key. Then, repost the picture to f/gaming with title \"WwWwWwWwWwwWw all the way\". Finally, navigate to the post.",
+    "image": [],
+    "instantiation_dict": {
+      "forum": "f/MechanicalKeyboards",
+      "description": "contains a special keyboard that has a huge W key",
+      "forum2": "f/gaming",
+      "characteristic": "title \"WwWwWwWwWwwWw all the way\"",
+      "action": "navigate to the post"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query",
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "f/gaming",
+      "url_note": "GOLD in PRED",
+      "program_html": [
+        {
+          "url": "last",
+          "locator": "lambda:(() => { try { return document.querySelector('.submission__link').textContent } catch { return '' } })()",
+          "required_contents": {
+            "exact_match": "WwWwWwWwWwwWw all the way"
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__image",
+          "eval_fuzzy_image_match": "__REDDIT__/submission_images/c876b20d6b3b643774e61d6a3c0914a9bc013118c9f10bdc9ff4e940a084f4b9.jpg"
+        }
+      ]
+    },
+    "intent_template_id": 30,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/MechanicalKeyboards/14329"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 115,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Navigate to the {{status}} across {{forums}}. {{question}}?",
+    "intent": "Navigate to the most controversial post of all time (with a picture) across f/Paterson, f/WaterburyCT and f/monitor. What operating system is the person using (windows/ubuntu/arch/macos)?",
+    "image": [],
+    "instantiation_dict": {
+      "status": "most controversial post of all time (with a picture)",
+      "forums": "f/Paterson, f/WaterburyCT and f/monitor",
+      "question": "What operating system is the person using (windows/ubuntu/arch/macos)"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "windows"
+        ]
+      },
+      "reference_url": "__REDDIT__/f/monitor/107539",
+      "url_note": "GOLD in PRED"
+    },
+    "intent_template_id": 45,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "sol1: __REDDIT__/f/monitor+Paterson+WaterburyCT/controversial?t=all; sol2: subscribe/unsubscribe to related forum and the result will show in homepage"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 136,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Can you navigate to the post with {{number}} upvotes, which includes a meme of {{item}}? {{hint}}",
+    "intent": "Can you navigate to the post with 307 upvotes, which includes a meme of a dog sitting in a room that is engulfed in flames and saying it is fine? I think this was posted in /f/wallstreetbets.",
+    "image": null,
+    "instantiation_dict": {
+      "hint": "I think this was posted in /f/wallstreetbets.",
+      "number": "307",
+      "item": "a dog sitting in a room that is engulfed in flames and saying it is fine"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/wallstreetbets/136131 |OR| __REDDIT__/f/wallstreetbets/136131/meirl",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "intent_template_id": 54,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/wallstreetbets/136131"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 162,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Can you give me the URL for a gif I could send to my friend about the contrast of investing in a retirement account vs a brokerage account from the hot posts of /f/wallstreetbets?",
+    "intent": "Can you give me the URL for a gif I could send to my friend about the contrast of investing in a retirement account vs a brokerage account from the hot posts of /f/wallstreetbets?",
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "__REDDIT__/submission_images/73199932fc7c826edb8313f0993483b6982ea7d3ea368e8d904eab71cb642e2e.gif"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "__REDDIT__/submission_images/73199932fc7c826edb8313f0993483b6982ea7d3ea368e8d904eab71cb642e2e.gif"
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "",
+    "intent_template_id": 67
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 64,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/dataisbeautiful/60133",
+    "geolocation": null,
+    "intent_template": "What {{question}} that {{modifier}}?",
+    "intent": "What are the colors of the flag used in the country that is the third largest producer of cherries in year 2012?",
+    "image": [],
+    "instantiation_dict": {
+      "question": "are the colors of the flag used in the country",
+      "modifier": "is the third largest producer of cherries in year 2012"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "red",
+          "green",
+          "white"
+        ]
+      }
+    },
+    "intent_template_id": 25,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "medium",
+    "comments": "__WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/Italy"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 38,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/forums/all",
+    "geolocation": null,
+    "intent_template": "I'd like to find the subreddit for the city this photo was taken in. Can you navigate to it?",
+    "intent": "I'd like to find the subreddit for the city this photo was taken in. Can you navigate to it?",
+    "image": "environment_docker/webarena-homepage/static/input_images/reddit/task_38/input_0.png",
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/jerseycity",
+      "program_html": [],
+      "url_note": "GOLD in PRED"
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "hard: need to identify that the picture is of Jersey City, and navigate there",
+    "intent_template_id": 14
+  }
+]
