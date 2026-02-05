@@ -307,6 +307,16 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--per-template", type=int, default=1)
     ap.add_argument(
+        "--only-classifieds-start-url",
+        action="store_true",
+        help="Keep only tasks whose start_url does not include '|AND|' (i.e., no multi-site tasks).",
+    )
+    ap.add_argument(
+        "--exclude-reset",
+        action="store_true",
+        help="Drop tasks that require environment reset (faster screening).",
+    )
+    ap.add_argument(
         "--budget",
         type=int,
         default=24,
@@ -329,6 +339,15 @@ def main() -> int:
         raise ValueError("Expected a JSON list of tasks.")
 
     views = [TaskView.from_task(t) for t in raw]
+    if args.only_classifieds_start_url:
+        views = [
+            v
+            for v in views
+            if "|AND|" not in str(v.task.get("start_url", ""))
+            and "__CLASSIFIEDS__" in str(v.task.get("start_url", ""))
+        ]
+    if args.exclude_reset:
+        views = [v for v in views if not bool(v.task.get("require_reset"))]
     stage1 = pick_per_template(views, per_template=max(1, args.per_template), seed=args.seed)
     stage2 = pick_with_budget(stage1, budget=max(0, args.budget), seed=args.seed, dedup_threshold=max(0.0, args.dedup_threshold))
 
@@ -349,4 +368,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
