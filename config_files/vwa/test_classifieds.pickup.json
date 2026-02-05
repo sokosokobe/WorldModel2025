@@ -1,0 +1,951 @@
+[
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 35,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Search for \"{{phrase}}\"{{detail}} and return the links of {{target}}.",
+    "intent": "Search for \"loveseat\" in the Furniture category and return the links of the most recent two items that are not black or gray.",
+    "image": null,
+    "instantiation_dict": {
+      "phrase": "loveseat",
+      "detail": " in the Furniture category",
+      "category": "Furniture",
+      "target": "the most recent two items that are not black or gray"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "__CLASSIFIEDS__/index.php?page=item&id=33441",
+          "__CLASSIFIEDS__/index.php?page=item&id=42263"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 13
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 39,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find the three most recent {{item}} in the \"{{category}}\" category, and tell me {{attribute}}.",
+    "intent": "Find the three most recent bikes with predominantly red frames in the \"Bikes\" category, and tell me the size of their frames in inches.",
+    "image": null,
+    "instantiation_dict": {
+      "item": "bikes with predominantly red frames",
+      "category": "Bikes",
+      "attribute": "the size of their frames in inches"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "18",
+          "14",
+          "19"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "__CLASSIFIEDS__/index.php?page=item&id=70291 and __CLASSIFIEDS__/index.php?page=item&id=76502 and __CLASSIFIEDS__/index.php?page=item&id=66548",
+    "intent_template_id": 15
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 177,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Navigate to the {{product}} from {{location}} that {{condition}}.",
+    "intent": "Navigate to the cheapest listing in the \"Cars + trucks\" category from Ohio or Maryland that is the same color as the objects in this image.",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_177/input_0.png",
+    "instantiation_dict": {
+      "product": "cheapest listing in the \"Cars + trucks\" category",
+      "location": "Ohio or Maryland",
+      "condition": "is the same color as the objects in this image"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=15340",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 58
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 178,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "For the {{item}}, tell me the {{detail}}.",
+    "intent": "For the cheapest listing in the \"Music instruments\" category with a white guitar from West Virginia or Delaware, tell me the price in dollars.",
+    "image": null,
+    "instantiation_dict": {
+      "item": "cheapest listing in the \"Music instruments\" category with a white guitar from West Virginia or Delaware",
+      "detail": "price in dollars"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "41 |OR| fourty one"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 53
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 231,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__REDDIT__/f/Maine/99914/new-tourist-trap |AND| __CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Show me the {{attribute}} {{item}} {{condition}} from the classifieds site that looks the most similar to the flower in the image on Reddit. It doesn't have to be the same color.",
+    "intent": "Show me the cheapest flower in the Farm + garden category under $10 from the classifieds site that looks the most similar to the flower in the image on Reddit. It doesn't have to be the same color.",
+    "image": null,
+    "instantiation_dict": {
+      "attribute": "cheapest",
+      "item": "flower in the Farm + garden category",
+      "condition": "under $10"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=69345 |OR| __CLASSIFIEDS__/index.php?page=item&id=10003",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 73
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 98,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "How many {{attribute}} are {{listing detail}}?",
+    "intent": "How many hours are on the engine of the most recently listed red boat?",
+    "image": null,
+    "instantiation_dict": {
+      "attribute": "hours",
+      "listing detail": "on the engine of the most recently listed red boat"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "80 |OR| eighty"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": "",
+    "intent_template_id": 37
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 233,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=item&id=28914 |AND| __REDDIT__/f/springfieldMO/48540/never",
+    "geolocation": null,
+    "intent_template": "Are the characters in the image on Reddit shown in the listing on the classifieds site? If they are, name me the movie that they appear in.",
+    "intent": "Are the characters in the image on Reddit shown in the listing on the classifieds site? If they are, name me the movie that they appear in.",
+    "image": null,
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "lion king"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": "",
+    "intent_template_id": 74
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 133,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find the {{item}} with {{attribute}}. Add a {{rating}} rating with title \"{{title}}\" and text \"{{text}}\".",
+    "intent": "Find the oldest listing of Xbox One games in the \"Video gaming\" category with more than 9 games in the listing image. Add a 4 star rating with title \"Nice collection\" and text \"Any other games?\".",
+    "image": null,
+    "instantiation_dict": {
+      "item": "oldest listing of Xbox One games in the \"Video gaming\" category",
+      "attribute": "more than 9 games in the listing image",
+      "rating": "4 star",
+      "title": "Nice collection",
+      "text": "Any other games?"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=67441",
+          "locator": "func:get_query_text(__page__, '.comments_list h3')",
+          "required_contents": {
+            "must_include": [
+              "Nice collection by Blake Sullivan"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=67441",
+          "locator": "func:get_query_text(__page__, '.comments_list')",
+          "required_contents": {
+            "must_include": [
+              "Any other games?",
+              "4 of 5"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 35
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 145,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "I recall seeing this exact {{item}} on the site, add a comment on its listing with the title \"{{title}}\" and text \"{{comment}}\".",
+    "intent": "I recall seeing this exact expensive item in the Video Gaming category on the site, add a comment on its listing with the title \"Urgent\" and text \"Need this for my bowling alley.\".",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_145/input_0.png",
+    "instantiation_dict": {
+      "item": "expensive item in the Video Gaming category",
+      "title": "Urgent",
+      "comment": "Need this for my bowling alley."
+    },
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=43992",
+          "locator": "func:get_query_text(__page__, '.comments_list h3')",
+          "required_contents": {
+            "must_include": [
+              "Urgent by Blake Sullivan"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=43992",
+          "locator": "func:get_query_text(__page__, '.comments_list')",
+          "required_contents": {
+            "must_include": [
+              "Need this for my bowling alley."
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__CLASSIFIEDS__/index.php?page=item&id=43992",
+    "intent_template_id": 52
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 203,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=item&id=41938",
+    "geolocation": null,
+    "intent_template": "Help me leave a comment with the title \"Interested\" with the text \"I want to buy this item\", if the item comes with a cable that is able to connect to my USB-C ports, else leave a comment with the same title but with the text \"Do you have a USB-C cable?\".",
+    "intent": "Help me leave a comment with the title \"Interested\" with the text \"I want to buy this item\", if the item comes with a cable that is able to connect to my USB-C ports, else leave a comment with the same title but with the text \"Do you have a USB-C cable?\".",
+    "image": null,
+    "instantiation_dict": {},
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=41938",
+          "locator": "func:get_query_text(__page__, '.comments_list h3')",
+          "required_contents": {
+            "must_include": [
+              "Interested by Blake Sullivan"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=41938",
+          "locator": "func:get_query_text(__page__, '.comments_list')",
+          "required_contents": {
+            "must_include": [
+              "Do you have a USB-C cable?"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 64
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 213,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=item&id=79640",
+    "geolocation": null,
+    "intent_template": "Find me the seller's email if the item depicts Elvis Presley's performance without the audience shown, else leave a comment with the title \"Question\" and text \"Do you have one without the audience?\". Also, repeat the seller's email back to him in the comment's text to confirm it.",
+    "intent": "Find me the seller's email if the item depicts Elvis Presley's performance without the audience shown, else leave a comment with the title \"Question\" and text \"Do you have one without the audience?\". Also, repeat the seller's email back to him in the comment's text to confirm it.",
+    "image": null,
+    "instantiation_dict": {},
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=79640",
+          "locator": "func:get_query_text(__page__, '.comments_list h3')",
+          "required_contents": {
+            "must_include": [
+              "Question by Blake Sullivan"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=79640",
+          "locator": "func:get_query_text(__page__, '.comments_list')",
+          "required_contents": {
+            "must_include": [
+              "Do you have one without the audience?",
+              "joo-won_hernandez19@example.com"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "The phone number is spelled wrongly in the item's description. Expectation is that it should be corrected by the agent performing the task.",
+    "intent_template_id": 69
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 228,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__ |AND| __SHOPPING__/posterazzi-pdxjp6549small-live-photo-print-12-x-24-multi.html",
+    "geolocation": null,
+    "intent_template": "Find me the {{attribute}} {{item}} from the classifieds site that {{condition}}.{{action}}",
+    "intent": "Find me the most recent live plant listing from the classifieds site that is the same plant type as the plant shown in the image on OneStopMarket. Then, if there are at least 3 of those plants below 9ft tall shown in the product listing image, comment with the title \"Interested\" and text \"I want 3\".",
+    "image": null,
+    "instantiation_dict": {
+      "attribute": "most recent",
+      "item": "live plant listing",
+      "condition": "is the same plant type as the plant shown in the image on OneStopMarket",
+      "action": " Then, if there are at least 3 of those plants below 9ft tall shown in the product listing image, comment with the title \"Interested\" and text \"I want 3\"."
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=58212",
+          "locator": "func:get_query_text(__page__, '.comments_list h3')",
+          "required_contents": {
+            "must_include": [
+              "Interested by Blake Sullivan"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=58212",
+          "locator": "func:get_query_text(__page__, '.comments_list')",
+          "required_contents": {
+            "must_include": [
+              "I want 3"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 68
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 3,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find me the {{attribute}} {{item}}. It should be between {{range}}.",
+    "intent": "Find me the most recently posted item in the \"Photo + video\" category that is not completely black in color. It should be between $1000 to $1200.",
+    "image": null,
+    "instantiation_dict": {
+      "attribute": "most recently posted",
+      "item": "item in the \"Photo + video\" category that is not completely black in color",
+      "range": "$1000 to $1200"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=39343",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "medium",
+    "comments": "",
+    "intent_template_id": 1
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 174,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=search&sCategory=17&sOrder=i_price&iOrderType=desc&sShowAs=gallery",
+    "geolocation": null,
+    "intent_template": "For the {{item}} on this page {{attribute}}, tell me the {{detail}}.",
+    "intent": "For the item on this page which includes a Black Friday logo in the image, tell me the most specific location given of the posting.",
+    "image": null,
+    "instantiation_dict": {
+      "item": "item",
+      "attribute": "which includes a Black Friday logo in the image",
+      "detail": "most specific location given of the posting"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "Shaw",
+          "Washington, D.C."
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "medium",
+    "comments": "",
+    "intent_template_id": 54
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 9,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Help me make a post selling this item and navigate to it. Price it at $10 cheaper than the most similar item on the site {{range}} (of the same color). If there are multiple similar items, use the most recent posting.",
+    "intent": "Help me make a post selling this item and navigate to it. Price it at $10 cheaper than the most similar item on the site between $750-800 (of the same color). If there are multiple similar items, use the most recent posting.",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_9/input_0.png",
+    "instantiation_dict": {
+      "range": "between $750-800"
+    },
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "program_html": [
+        {
+          "url": "last",
+          "locator": "func:get_query_text(__page__, '.price')",
+          "required_contents": {
+            "must_include": [
+              "785.00"
+            ]
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".item-photos",
+          "eval_fuzzy_image_match": "__CLASSIFIEDS__/oc-content/uploads/42906/42906.png"
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "Closest item: __CLASSIFIEDS__/index.php?page=item&id=42906",
+    "intent_template_id": 4
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 110,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Search for \"{{phrase}}\" and tell me {{detail}}.",
+    "intent": "Search for \"mario kart\" and tell me how many games are in the image of the most recently listed item that costs at least $300.",
+    "image": null,
+    "instantiation_dict": {
+      "phrase": "mario kart",
+      "detail": "how many games are in the image of the most recently listed item that costs at least $300"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0 |OR| zero"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__CLASSIFIEDS__/index.php?page=item&id=34406",
+    "intent_template_id": 16
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 166,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=search&sCategory=21&iPage=11",
+    "geolocation": null,
+    "intent_template": "Navigate to the {{item}} on this page whose image {{condition}} as the item in the image provided.",
+    "intent": "Navigate to the listing on this page whose image includes an instrument the same color as the item in the image provided.",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_166/input_0.png",
+    "instantiation_dict": {
+      "item": "listing",
+      "condition": "includes an instrument the same color"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=40109",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": "",
+    "intent_template_id": 55
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 200,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__SHOPPING__/24-pcs-lot-wild-animal-cupcake-wrappers-birthday-cake-party-decoration-supplies-lion-monkey-zebra-elephant.html |AND| __CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Show me the {{attribute}} {{item}} from the classifieds site {{description}} on OneStopMarket.",
+    "intent": "Show me the latest listing of a pillow from the classifieds site with a pattern matching the top left animal in the first image of the listing on OneStopMarket.",
+    "image": null,
+    "instantiation_dict": {
+      "attribute": "latest",
+      "item": "listing of a pillow",
+      "description": "with a pattern matching the top left animal in the first image of the listing"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=65205",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 62
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 222,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__/index.php?page=item&id=34501",
+    "geolocation": null,
+    "intent_template": "Based on the measuring tape in the image, is the stated diameter of this item correct?",
+    "intent": "Based on the measuring tape in the image, is the stated diameter of this item correct?",
+    "image": null,
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "yes"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 70
+  },
+  {
+    "sites": [
+      "classifieds",
+      "shopping"
+    ],
+    "task_id": 37,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__ |AND| __SHOPPING__",
+    "geolocation": null,
+    "intent_template": "Find all listings for this exact item on OSClass and compare its price to the cheapest listing on OneStopMarket. Return the link of {{target}}.",
+    "intent": "Find all listings for this exact item on OSClass and compare its price to the cheapest listing on OneStopMarket. Return the link of the cheapest item on both sites.",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_37/input_0.png",
+    "instantiation_dict": {
+      "target": "the cheapest item on both sites"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "__SHOPPING__/nintendo-switch-w-neon-blue-neon-red-joy-con-mario-kart-8-deluxe-full-game-download-switch.html",
+          "__CLASSIFIEDS__/index.php?page=item&id=59435"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": ""
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 14
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 99,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find the {{product}}, and tell me how much it costs in dollars.",
+    "intent": "Find the most expensive wheelchair lift that has multiple people in the image of the listing, and tell me how much it costs in dollars.",
+    "image": null,
+    "instantiation_dict": {
+      "product": "most expensive wheelchair lift that has multiple people in the image of the listing"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "2995"
+        ]
+      },
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=9830",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 33
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 185,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find me {{product}} that {{condition}} in the image.",
+    "intent": "Find me the most expensive Collectibles listing that has a listing image that references a sports team for the city in the image.",
+    "image": "environment_docker/webarena-homepage/static/input_images/classifieds/task_185/input_0.png",
+    "instantiation_dict": {
+      "product": "the most expensive Collectibles listing",
+      "condition": "has a listing image that references a sports team for the city"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=33317",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "intent_template_id": 30,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": ""
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 77,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Navigate to my listing {{item}} and {{action}}.",
+    "intent": "Navigate to my listing of the all-black bike and change the price (including in the description) to one dollar more than the cheapest bike on the site (ignoring bikes that cost $1).",
+    "image": null,
+    "instantiation_dict": {
+      "item": "of the all-black bike",
+      "action": "change the price (including in the description) to one dollar more than the cheapest bike on the site (ignoring bikes that cost $1)"
+    },
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=84145",
+          "locator": "func:get_query_text(__page__, '.price')",
+          "required_contents": {
+            "must_include": [
+              "6.00"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=84145",
+          "locator": "func:get_query_text(__page__, '.desc')",
+          "required_contents": {
+            "must_include": [
+              "$6"
+            ]
+          }
+        },
+        {
+          "url": "__CLASSIFIEDS__/index.php?page=item&id=84145",
+          "locator": "func:get_query_text(__page__, '.desc')",
+          "required_contents": {
+            "must_exclude": [
+              "$300"
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 2
+  },
+  {
+    "sites": [
+      "classifieds"
+    ],
+    "task_id": 204,
+    "require_login": true,
+    "storage_state": "./.auth/classifieds_state.json",
+    "start_url": "__CLASSIFIEDS__",
+    "geolocation": null,
+    "intent_template": "Find the {{item}} that {{condition}}.",
+    "intent": "Find the cheapest guitar between $1200 and $1500 that is made of lightly-colored wood and comes with a soft guitar case that has blue-colored insides.",
+    "image": null,
+    "instantiation_dict": {
+      "item": "cheapest guitar between $1200 and $1500",
+      "condition": "is made of lightly-colored wood and comes with a soft guitar case that has blue-colored insides"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__CLASSIFIEDS__/index.php?page=item&id=76469",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 23
+  }
+]
