@@ -1,0 +1,12 @@
+# test_shopping.pickup_pruned
+
+| task_id | intent_template_id | require_reset | start_url | intent |
+|---:|---:|---:|---|---|
+| 7 | 2 | 0 | __SHOPPING__/ | Search for 'pencil case'. List the full product names of those with animal designs on the first page and tell me the price range of the available products |
+| 99 | 28 | 0 | __SHOPPING__/office-products/office-furniture-lighting/chairs-sofas.html?product_list_limit=36 | I really like the purple item, but I'm not a fan of the color. Can you see if there's one in brown on this page, and if so, add the cheapest one to my wishlist? |
+| 259 | 85 | 0 | __SHOPPING__/clothing-shoes-jewelry/novelty-more/clothing.html?p=23&product_list_limit=36 | Can you order the item on this page that is cheaper between the shirt with a bloody hand (in any color) and the red dress and just leave the other one in my cart? My size is XXL. |
+| 438 | 140 | 0 | __SHOPPING__ | Navigate to the category where this image is most likely to be found. Then, find me the cheapest item that costs more than $5 and can charge multiple devices like in the image shown and add it to my cart. |
+| 180 | 54 | 0 | __SHOPPING__ | Find me a digital camera with warranty that is of the same brand as products in one of the following pictures and buy one for me. It needs to be black and have at least 12 reviews. Furthermore, it cannot be too expensive - it needs to have price less than $700. |
+| 264 | 87 | 0 | __SHOPPING__/catalogsearch/result/index/?q=bonsai&product_list_order=name | Can you leave a 4 star review on the most expensive plant that looks like the hands of a clock at 6:40 saying "I love this plant! It's so unique and I get so many compliments on it! The only downside is that it's a little hard to take care of."? |
+| 247 | 81 | 0 | __SHOPPING__/shop-succulents-assorted-collection-variety-set-of-hand-selected-fully-rooted-live-indoor-succulent-plants-6-pack.html | This would make a great birthday gift for my friend! Can you order another one on this site of a single plant that looks most like the middle right plant in the first picture to 3235 Voigt Dr, La Jolla, CA 92093? My phone number is also (858) 555-0172 in case it is needed. |
+| 166 | 48 | 0 | __SHOPPING__ | Find me a shoe that is designed for the sport depicted in the first picture and has the same brand as products in the second picture. It needs to have the same color as the flower in the third picture. |
