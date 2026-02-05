@@ -1,0 +1,1078 @@
+[
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 27,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/forums/all",
+    "geolocation": null,
+    "intent_template": "Make a Reddit post with this image ({{image_url}}) in the most relevant subreddit, and navigate to its comments section.",
+    "intent": "Make a Reddit post with this image (https://images.pexels.com/photos/14267038/pexels-photo-14267038.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2) in the most relevant subreddit, and navigate to its comments section.",
+    "image": "environment_docker/webarena-homepage/static/input_images/reddit/task_27/input_0.png",
+    "instantiation_dict": {
+      "image_url": "https://images.pexels.com/photos/14267038/pexels-photo-14267038.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/MechanicalKeyboards",
+      "url_note": "GOLD in PRED",
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__content",
+          "eval_fuzzy_image_match": "https://images.pexels.com/photos/14267038/pexels-photo-14267038.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "hard: existing models probably cannot handle this task because of screen browsing/navigation capabilities",
+    "intent_template_id": 10
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 74,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find me {{description}} of {{object}}. Then, {{action}}.",
+    "intent": "Find me a keyboard version of what the man is wearing in the picture. Then, count how many white key is on it and post it in the comment section of that post with the following format: \"It has <number of keys> white keys!!\" (not including the double inverted commas), replacing <number of keys> with the actual number of white keys in the picture. Remember that partially occluded keycaps need to be counted also.",
+    "image": [
+      "environment_docker/webarena-homepage/static/input_images/reddit/task_74/input_0.png"
+    ],
+    "instantiation_dict": {
+      "description": "a keyboard version",
+      "object": "what the man is wearing in the picture",
+      "action": "count how many white key is on it and post it in the comment section of that post with the following format: \"It has <number of keys> white keys!!\" (not including the double inverted commas), replacing <number of keys> with the actual number of white keys in the picture. Remember that partially occluded keycaps need to be counted also"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/MechanicalKeyboards/56378",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "must_include": [
+              "It has 38 white keys!! |OR| It has 39 white keys!!"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 29,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/MechanicalKeyboards/56378 -- there's a very tiny part of a key between the gap in the upper left, so accepting both 38 and 39."
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 76,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/funny/125907",
+    "geolocation": null,
+    "intent_template": "{{question}}? {{action}} and create a comment with the following format: {{comment_format}}.",
+    "intent": "How much money does the person have? Downvote the post and create a comment with the following format: \"This is a <amount of money (in digits only)> bill from <country>.\" (not including the double inverted commas), replacing <amount of money> with the actual amount of money the person has and <country> with the country that issue the bill.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "How much money does the person have",
+      "action": "Downvote the post",
+      "comment_format": "\"This is a <amount of money (in digits only)> bill from <country>.\" (not including the double inverted commas), replacing <amount of money> with the actual amount of money the person has and <country> with the country that issue the bill"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": null,
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/funny/125907",
+          "locator": "document.querySelector('div.submission__vote').querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "must_include": [
+              "vote vote--user-downvoted"
+            ]
+          }
+        },
+        {
+          "url": "__REDDIT__/f/funny/125907",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "must_include": [
+              "This is a 20000000000 bill from Zimbabwe. |OR| This is a 20,000,000,000 bill from Zimbabwe."
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 32,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "__REDDIT__/f/funny/125907"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 89,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/space/112972",
+    "geolocation": null,
+    "intent_template": "{{question}}? Leave a comment with the following format: {{format}}.",
+    "intent": "How many Jupiter instances are in this picture? Leave a comment with the following format: \"It has <number of Jupiter> Jupiter!!\" (not including the double inverted commas), replacing <number of Jupiter> with the actual number of Jupiter in the picture. Remember to use digits.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "How many Jupiter instances are in this picture",
+      "format": "\"It has <number of Jupiter> Jupiter!!\" (not including the double inverted commas), replacing <number of Jupiter> with the actual number of Jupiter in the picture. Remember to use digits"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": null,
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/space/112972",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "It has 4 Jupiter!!"
+          }
+        }
+      ]
+    },
+    "intent_template_id": 38,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": "some basic tasks"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 104,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/memes/21059",
+    "geolocation": null,
+    "intent_template": "{{question}}? Leave a comment replying to user \"{{user}}\" with the following format: {{format}}.",
+    "intent": "How many kirbies are in the picture? Leave a comment replying to user \"Valenyn\" with the following format: \"There are <number of kirbies> kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*\" (not including the quote marks), replacing <number of kirbies> with the actual number of kirbies. Remember to use digits.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "How many kirbies are in the picture",
+      "user": "Valenyn",
+      "format": "\"There are <number of kirbies> kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*\" (not including the quote marks), replacing <number of kirbies> with the actual number of kirbies. Remember to use digits"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/memes/21059",
+          "locator": "func:reddit_get_parent_comment_username_of_latest_comment_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "Valenyn"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/MechanicalKeyboards/56362",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "There are 3 kirbies *･゜ﾟ･*:.｡..｡.:*･'(*ﾟ▽ﾟ*)'･*:.｡. .｡.:*･゜ﾟ･*"
+          }
+        }
+      ]
+    },
+    "intent_template_id": 41,
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "easy",
+    "comments": ""
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 154,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "{{intro}}. Can you tell me {{information}}?{{action}}",
+    "intent": "I think I saw a post in f/DataIsBeautiful that talked about the price of training ImageNet models. Can you tell me how much it cost in 2020 was to train a top-5 model with >93% accuracy? Finally, take me to the comments section of the post.",
+    "instantiation_dict": {
+      "intro": "I think I saw a post in f/DataIsBeautiful that talked about the price of training ImageNet models",
+      "information": "how much it cost in 2020 was to train a top-5 model with >93% accuracy",
+      "action": " Finally, take me to the comments section of the post."
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match",
+        "url_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "7.43"
+        ]
+      },
+      "reference_url": "__REDDIT__/f/dataisbeautiful/103920",
+      "url_note": "GOLD in PRED",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "$7.43"
+    },
+    "reasoning_difficulty": "easy",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "__REDDIT__/f/dataisbeautiful/103920/oc-the-cost-of-training-ai-on-imagenet-has-decreased-from",
+    "intent_template_id": 62
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 155,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/pics",
+    "geolocation": null,
+    "intent_template": "{{intro}}. Can you navigate to the comments section of a post {{description}}?",
+    "intent": "I saw a really funny movie last week (the image is the movie poster). Can you navigate to the comments section of a post that has the picture that was the inspiration for the IRS scene?",
+    "image": "environment_docker/webarena-homepage/static/input_images/reddit/task_155/input_0.png",
+    "instantiation_dict": {
+      "intro": "I saw a really funny movie last week (the image is the movie poster)",
+      "description": "that has the picture that was the inspiration for the IRS scene"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/pics/131632",
+      "program_html": [],
+      "url_note": "GOLD in PRED"
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 63
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 168,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/pics?next%5Branking%5D=1773&next%5Bid%5D=67091",
+    "geolocation": null,
+    "intent_template": "Can you repost the image on this page that would fit best in {{subreddit}} with the same title and text as the original post and take me to the comments section of the post?",
+    "instantiation_dict": {
+      "subreddit": "f/EarthPorn"
+    },
+    "intent": "Can you repost the image on this page that would fit best in f/EarthPorn with the same title and text as the original post and take me to the comments section of the post?",
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "last",
+          "locator": "func:get_query_text(__page__, \"#main > article > div > div.submission__inner > header\")",
+          "required_contents": {
+            "must_include": [
+              "Aurora Borealis looking in the Direction to Svalbard flying from Lahore to Toronto (my pic) 🍂💫✨",
+              "MarvelsGrantMan136",
+              "EarthPorn"
+            ]
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__image",
+          "eval_fuzzy_image_match": "__REDDIT__/submission_images/1972dfbb29553ecc270ae83ab679d218f425d478136f1f524a09047e299a2cef.jpg"
+        }
+      ]
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "medium",
+    "comments": "",
+    "intent_template_id": 70
+  },
+  {
+    "sites": [
+      "reddit",
+      "shopping",
+      "wikipedia"
+    ],
+    "task_id": 187,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__ |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/Yoda |AND| __SHOPPING__/home-kitchen/bedding/kids-bedding.html?product_list_order=name&product_list_dir=desc",
+    "geolocation": null,
+    "intent_template": "Can you make a post in {{forum}} titled '{{title}}', add the full sized version of the image on the shopping page most related to the wikipedia page? Finally, navigate to the comments section of it.",
+    "instantiation_dict": {
+      "forum": "the forum for the capital of Rhode Island (not the one for the state)",
+      "title": "Perfect for the cold weather"
+    },
+    "intent": "Can you make a post in the forum for the capital of Rhode Island (not the one for the state) titled 'Perfect for the cold weather', add the full sized version of the image on the shopping page most related to the wikipedia page? Finally, navigate to the comments section of it.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "last",
+          "locator": "func:get_query_text(__page__, \"#main > article > div > div.submission__inner > header\")",
+          "required_contents": {
+            "must_include": [
+              "Perfect for the cold weather",
+              "MarvelsGrantMan136",
+              "providence"
+            ]
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__image",
+          "eval_fuzzy_image_match": "__SHOPPING__/media/catalog/product/cache/829a59e57f886f8cf0598ffca4f8a940/B/0/B09LQ95N1N.0.jpg |OR| __SHOPPING__/media/catalog/product/cache/829a59e57f886f8cf0598ffca4f8a940/B/0/B09LQ95N1N.1.jpg"
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 78
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 199,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Can you comment '{{comment}}' on the top post (of all time) in {{forum}} that relates to the image?",
+    "instantiation_dict": {
+      "comment": "I remember seeing him in person, one of the best nights of my life.",
+      "forum": "f/music"
+    },
+    "image": "environment_docker/webarena-homepage/static/input_images/reddit/task_199/input_0.png",
+    "intent": "Can you comment 'I remember seeing him in person, one of the best nights of my life.' on the top post (of all time) in f/music that relates to the image?",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/Music/35453/michael-jackson-s-thriller-returns-to-billboard-top-10-after",
+          "locator": "func:reddit_get_latest_comment_content_by_username(__page__, 'MarvelsGrantMan136')",
+          "required_contents": {
+            "exact_match": "I remember seeing him in person, one of the best nights of my life."
+          }
+        }
+      ]
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 82
+  },
+  {
+    "sites": [
+      "shopping",
+      "reddit"
+    ],
+    "task_id": 43,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__SHOPPING__ |AND| __REDDIT__/forums",
+    "geolocation": null,
+    "intent_template": "Gather the title of {{product}} from OneStopShop, and post its full product name in the {{subreddit}} subreddit under the title \"{{post_title}}\"",
+    "instantiation_dict": {
+      "product": "the cheapest yellow video projector in the \"Video Projectors\" category",
+      "subreddit": "/f/gadgets",
+      "post_title": "Has anyone bought this product?"
+    },
+    "intent": "Gather the title of the cheapest yellow video projector in the \"Video Projectors\" category from OneStopShop, and post its full product name in the /f/gadgets subreddit under the title \"Has anyone bought this product?\"",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/gadgets",
+      "url_note": "GOLD in PRED",
+      "program_html": [
+        {
+          "url": "func:reddit_get_post_url('__last_url__')",
+          "locator": "func:get_query_text(__page__, '.submission__title')",
+          "required_contents": {
+            "exact_match": "Has anyone bought this product?"
+          }
+        },
+        {
+          "url": "func:reddit_get_post_url('__last_url__')",
+          "locator": "func:get_query_text(__page__, '.submission__body')",
+          "required_contents": {
+            "must_include": [
+              "RUIQIMAO Mini Projector Portable 1080P Home Cinema Projector Theater Video 100''Display LCD HiFi Audio for TV Box/Xbox/TF Card/U Disk P2L1"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 16,
+    "comments": "__SHOPPING__/ruiqimao-mini-projector-portable-1080p-home-cinema-projector-theater-video-100-display-lcd-hifi-audio-for-tv-box-xbox-tf-card-u-disk-p2l1.html",
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard"
+  },
+  {
+    "sites": [
+      "shopping",
+      "reddit"
+    ],
+    "task_id": 44,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__SHOPPING__ |AND| __REDDIT__/forums",
+    "geolocation": null,
+    "intent_template": "Find an image of {{product}} from OneStopShop, and post it as an image in the {{subreddit}} subreddit with the title as the name of the piece and the artist's name.",
+    "instantiation_dict": {
+      "product": "the most expensive artwork from the Posters & Prints category",
+      "subreddit": "/f/Art"
+    },
+    "intent": "Find an image of the most expensive artwork from the Posters & Prints category from OneStopShop, and post it as an image in the /f/Art subreddit with the title as the name of the piece and the artist's name.",
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "program_html",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/Art",
+      "url_note": "GOLD in PRED",
+      "program_html": [
+        {
+          "url": "func:reddit_get_post_url('__last_url__')",
+          "locator": "func:get_query_text(__page__, '.submission__title')",
+          "required_contents": {
+            "must_include": [
+              "Frozen Shores",
+              "Marion Griese"
+            ]
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__image",
+          "eval_fuzzy_image_match": "__SHOPPING__/media/catalog/product/cache/829a59e57f886f8cf0598ffca4f8a940/B/0/B09NRZ3LZW.0.jpg"
+        }
+      ]
+    },
+    "intent_template_id": 17,
+    "comments": "__SHOPPING__/fine-art-canvas-frozen-shores-canvas-print-artwork-by-marion-griese-45-w-x-60-h-vertical-gallery-wrapped-large-wall-decor.html",
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 73,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Find a post in {{forum}} that {{description}}. Then, repost the picture to {{forum2}} with {{characteristic}}. Finally, {{action}}.",
+    "intent": "Find a post in f/MechanicalKeyboards that contains a special keyboard that has a huge W key. Then, repost the picture to f/gaming with title \"WwWwWwWwWwwWw all the way\". Finally, navigate to the post.",
+    "image": [],
+    "instantiation_dict": {
+      "forum": "f/MechanicalKeyboards",
+      "description": "contains a special keyboard that has a huge W key",
+      "forum2": "f/gaming",
+      "characteristic": "title \"WwWwWwWwWwwWw all the way\"",
+      "action": "navigate to the post"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query",
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "f/gaming",
+      "url_note": "GOLD in PRED",
+      "program_html": [
+        {
+          "url": "last",
+          "locator": "lambda:(() => { try { return document.querySelector('.submission__link').textContent } catch { return '' } })()",
+          "required_contents": {
+            "exact_match": "WwWwWwWwWwwWw all the way"
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "last",
+          "eval_image_class": ".submission__image",
+          "eval_fuzzy_image_match": "__REDDIT__/submission_images/c876b20d6b3b643774e61d6a3c0914a9bc013118c9f10bdc9ff4e940a084f4b9.jpg"
+        }
+      ]
+    },
+    "intent_template_id": 30,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/MechanicalKeyboards/14329"
+  },
+  {
+    "sites": [
+      "reddit",
+      "wikipedia"
+    ],
+    "task_id": 85,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/EarthPorn?next%5Branking%5D=18106&next%5Bid%5D=98160 |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing",
+    "geolocation": null,
+    "intent_template": "Consider {{modifier}}. Downvote the posts {{modifier1}} and upvote the posts {{modifier2}}.",
+    "intent": "Consider all posts with bodies of water in this page. Downvote the posts that are taken in northern hemisphere and upvote the posts that are taken in the southern hemisphere.",
+    "image": [],
+    "instantiation_dict": {
+      "modifier": "all posts with bodies of water in this page",
+      "modifier1": "that are taken in northern hemisphere",
+      "modifier2": "that are taken in the southern hemisphere"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": null,
+      "program_html": [
+        {
+          "url": "__REDDIT__/f/EarthPorn/98160",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-downvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/119215",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-downvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/119100",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-downvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76382",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-downvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76394",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-downvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76351",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76405",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76416",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/76387",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/54431",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-upvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/119220",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-upvoted"
+          }
+        },
+        {
+          "url": "__REDDIT__/f/EarthPorn/119108",
+          "locator": "document.querySelectorAll('div.submission__vote')[0].querySelector('form').getAttribute('class')",
+          "required_contents": {
+            "exact_match": "vote vote--user-upvoted"
+          }
+        }
+      ]
+    },
+    "intent_template_id": 36,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "Note: Does not check every single post on the page. north: 1 (98160), 2, 6 (119215), 7, 8, 10, 11 (119100), 12 (76382), 13, 15, 18 (76394), 19, 20, 23; south: 4 (54431), 17 (119220), 21 (119108)"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 115,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Navigate to the {{status}} across {{forums}}. {{question}}?",
+    "intent": "Navigate to the most controversial post of all time (with a picture) across f/Paterson, f/WaterburyCT and f/monitor. What operating system is the person using (windows/ubuntu/arch/macos)?",
+    "image": [],
+    "instantiation_dict": {
+      "status": "most controversial post of all time (with a picture)",
+      "forums": "f/Paterson, f/WaterburyCT and f/monitor",
+      "question": "What operating system is the person using (windows/ubuntu/arch/macos)"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match",
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "windows"
+        ]
+      },
+      "reference_url": "__REDDIT__/f/monitor/107539",
+      "url_note": "GOLD in PRED"
+    },
+    "intent_template_id": 45,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "sol1: __REDDIT__/f/monitor+Paterson+WaterburyCT/controversial?t=all; sol2: subscribe/unsubscribe to related forum and the result will show in homepage"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 136,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Can you navigate to the post with {{number}} upvotes, which includes a meme of {{item}}? {{hint}}",
+    "intent": "Can you navigate to the post with 307 upvotes, which includes a meme of a dog sitting in a room that is engulfed in flames and saying it is fine? I think this was posted in /f/wallstreetbets.",
+    "image": null,
+    "instantiation_dict": {
+      "hint": "I think this was posted in /f/wallstreetbets.",
+      "number": "307",
+      "item": "a dog sitting in a room that is engulfed in flames and saying it is fine"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/wallstreetbets/136131 |OR| __REDDIT__/f/wallstreetbets/136131/meirl",
+      "program_html": [],
+      "url_note": "EXACT"
+    },
+    "intent_template_id": 54,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "easy",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/wallstreetbets/136131"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 162,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__",
+    "geolocation": null,
+    "intent_template": "Can you give me the URL for a gif I could send to my friend about the contrast of investing in a retirement account vs a brokerage account from the hot posts of /f/wallstreetbets?",
+    "intent": "Can you give me the URL for a gif I could send to my friend about the contrast of investing in a retirement account vs a brokerage account from the hot posts of /f/wallstreetbets?",
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "__REDDIT__/submission_images/73199932fc7c826edb8313f0993483b6982ea7d3ea368e8d904eab71cb642e2e.gif"
+        ]
+      },
+      "reference_url": "",
+      "program_html": [],
+      "string_note": "",
+      "reference_answer_raw_annotation": "__REDDIT__/submission_images/73199932fc7c826edb8313f0993483b6982ea7d3ea368e8d904eab71cb642e2e.gif"
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "medium",
+    "comments": "",
+    "intent_template_id": 67
+  },
+  {
+    "sites": [
+      "reddit",
+      "shopping"
+    ],
+    "task_id": 208,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__ |AND| __SHOPPING__/rca-43-4k-ultra-hd-2160p-hdr-roku-smart-led-tv-rtru4327-us.html |AND| __SHOPPING__/pioneer-43-inch-class-led-4k-uhd-smart-fire-tv-pn43951-22u-2021-model.html",
+    "geolocation": null,
+    "intent_template": "Can you first make a post in {{forum1}} (then afterwards in {{forum2}}) asking for a comparison between the two {{item}} in the shopping tabs? Make sure to include both their SKUs in the title and a picture of the {{condition}}.",
+    "instantiation_dict": {
+      "forum1": "f/monitor",
+      "forum2": "f/gadgets",
+      "item": "monitors",
+      "condition": "monitor with the movie titles"
+    },
+    "intent": "Can you first make a post in f/monitor (then afterwards in f/gadgets) asking for a comparison between the two monitors in the shopping tabs? Make sure to include both their SKUs in the title and a picture of the monitor with the movie titles.",
+    "require_reset": true,
+    "eval": {
+      "eval_types": [
+        "program_html",
+        "page_image_query"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "__REDDIT__/user/MarvelsGrantMan136",
+          "locator": "func:get_query_text(__page__, \"#main > article:nth-child(4)\")",
+          "required_contents": {
+            "must_include": [
+              "monitor",
+              "B09F3TW5CP",
+              "B09SBS75XB"
+            ]
+          }
+        },
+        {
+          "url": "__REDDIT__/user/MarvelsGrantMan136",
+          "locator": "func:get_query_text(__page__, \"#main > article:nth-child(3)\")",
+          "required_contents": {
+            "must_include": [
+              "gadgets",
+              "B09F3TW5CP",
+              "B09SBS75XB"
+            ]
+          }
+        }
+      ],
+      "page_image_query": [
+        {
+          "eval_image_url": "__REDDIT__/user/MarvelsGrantMan136",
+          "eval_image_class": ".submission__row",
+          "eval_fuzzy_image_match": "__SHOPPING__/media/catalog/product/cache/829a59e57f886f8cf0598ffca4f8a940/B/0/B09F3TW5CP.0.jpg |OR| __SHOPPING__/media/catalog/product/cache/829a59e57f886f8cf0598ffca4f8a940/B/0/B09F3TW5CP.1.jpg",
+          "ssim_threshold": 0.6
+        }
+      ]
+    },
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "",
+    "intent_template_id": 86
+  },
+  {
+    "sites": [
+      "wikipedia",
+      "reddit"
+    ],
+    "task_id": 48,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/dataisbeautiful |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing",
+    "geolocation": null,
+    "intent_template": "What {{question}}? Answer using the information from the Wikipedia site in the second tab.",
+    "intent": "What is the absolute difference between NVIDIA's FY22 net income listed in wikipedia and reddit forum 'dataisbeautiful' (in billions)? Answer using the information from the Wikipedia site in the second tab.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "is the absolute difference between NVIDIA's FY22 net income listed in wikipedia and reddit forum 'dataisbeautiful' (in billions)"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "5.35"
+        ]
+      }
+    },
+    "intent_template_id": 19,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "medium",
+    "overall_difficulty": "hard",
+    "comments": "__WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/Nvidia: 9.75B, __REDDIT__/f/dataisbeautiful/124787/oc-nvidia-s-fy22-income-statement: 4.4B"
+  },
+  {
+    "sites": [
+      "wikipedia",
+      "reddit"
+    ],
+    "task_id": 53,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/dataisbeautiful/60171 |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing",
+    "geolocation": null,
+    "intent_template": "What {{question}} {{modifier}}? Answer using the information from the Wikipedia site in the second tab.",
+    "intent": "What was the total asset value (in trillions of USD, to 3 decimal places) of the fifth largest employer in China in 2017? Answer using the information from the Wikipedia site in the second tab.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "was the total asset value (in trillions of USD, to 3 decimal places)",
+      "modifier": "of the fifth largest employer in China in 2017"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "0.585"
+        ]
+      }
+    },
+    "intent_template_id": 20,
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/State_Grid_Corporation_of_China, US$ 585.278 billion (2017)"
+  },
+  {
+    "sites": [
+      "wikipedia",
+      "reddit"
+    ],
+    "task_id": 61,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/dataisbeautiful/103828 |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing",
+    "geolocation": null,
+    "intent_template": "Who {{question}} that {{modifier}}? Answer using the information from the Wikipedia site in the second tab.",
+    "intent": "Who directed the movie that is shown as the background picture of the third highest earning movie production companies? Answer using the information from the Wikipedia site in the second tab.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "directed the movie",
+      "modifier": "is shown as the background picture of the third highest earning movie production companies"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "exact_match": "Sam Mendes"
+      }
+    },
+    "intent_template_id": 24,
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/Skyfall"
+  },
+  {
+    "sites": [
+      "wikipedia",
+      "reddit"
+    ],
+    "task_id": 63,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/f/dataisbeautiful/82193 |AND| __WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/User:The_other_Kiwix_guy/Landing",
+    "geolocation": null,
+    "intent_template": "What {{question}} that {{modifier}}? Answer using the information from the Wikipedia site in the second tab.",
+    "intent": "What is the highest elevation (in ft) of the home state of the team that surpassed Buffalo Bills in both defensive rating and offensive rating during the 2022 Season? Answer using the information from the Wikipedia site in the second tab.",
+    "image": [],
+    "instantiation_dict": {
+      "question": "is the highest elevation (in ft) of the home state of the team",
+      "modifier": "surpassed Buffalo Bills in both defensive rating and offensive rating during the 2022 Season"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "string_match"
+      ],
+      "reference_answers": {
+        "must_include": [
+          "3213 |OR| 3,213"
+        ]
+      }
+    },
+    "intent_template_id": 18,
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__WIKIPEDIA__/wikipedia_en_all_maxi_2022-05/A/Philadelphia_Eagles"
+  },
+  {
+    "sites": [
+      "reddit"
+    ],
+    "task_id": 38,
+    "require_login": true,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__REDDIT__/forums/all",
+    "geolocation": null,
+    "intent_template": "I'd like to find the subreddit for the city this photo was taken in. Can you navigate to it?",
+    "intent": "I'd like to find the subreddit for the city this photo was taken in. Can you navigate to it?",
+    "image": "environment_docker/webarena-homepage/static/input_images/reddit/task_38/input_0.png",
+    "instantiation_dict": {},
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "url_match"
+      ],
+      "reference_answers": null,
+      "reference_url": "__REDDIT__/f/jerseycity",
+      "program_html": [],
+      "url_note": "GOLD in PRED"
+    },
+    "reasoning_difficulty": "medium",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "hard: need to identify that the picture is of Jersey City, and navigate there",
+    "intent_template_id": 14
+  },
+  {
+    "sites": [
+      "reddit",
+      "shopping"
+    ],
+    "task_id": 75,
+    "require_login": false,
+    "storage_state": "./.auth/reddit_state.json",
+    "start_url": "__SHOPPING__ |AND| __REDDIT__",
+    "geolocation": null,
+    "intent_template": "How should I {{task}}? Search {{forum}} for the answer and {{action}}.",
+    "intent": "How should I keep my keyboard clean while eating cheese balls and typing on keyboard at the same time? Search f/MechanicalKeyboards for the answer and buy me the tool on the shopping site.",
+    "image": [],
+    "instantiation_dict": {
+      "task": "keep my keyboard clean while eating cheese balls and typing on keyboard at the same time",
+      "forum": "f/MechanicalKeyboards",
+      "action": "buy me the tool on the shopping site"
+    },
+    "require_reset": false,
+    "eval": {
+      "eval_types": [
+        "program_html"
+      ],
+      "reference_answers": null,
+      "reference_url": "",
+      "program_html": [
+        {
+          "url": "func:shopping_get_latest_order_url()",
+          "locator": "func:shopping_get_order_product_name_list(__page__)",
+          "required_contents": {
+            "must_include": [
+              "Chopsticks"
+            ]
+          }
+        }
+      ]
+    },
+    "intent_template_id": 31,
+    "reasoning_difficulty": "hard",
+    "visual_difficulty": "hard",
+    "overall_difficulty": "hard",
+    "comments": "__REDDIT__/f/MechanicalKeyboards/120949, "
+  }
+]
