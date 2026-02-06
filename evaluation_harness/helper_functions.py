@@ -69,7 +69,9 @@ def shopping_get_latest_order_url() -> str:
     )
     assert response.status_code == 200
     response_obj = response.json()["items"][0]
-    order_id = int(response_obj["increment_id"])
+    # order_id = int(response_obj["increment_id"])
+    # Magentoの注文詳細URLが要求するのは increment_id ではなく entity_id のことが多い
+    order_id = int(response_obj["entity_id"])
     order_url = f"{SHOPPING}/sales/order/view/order_id/{order_id}/"
     return order_url
 

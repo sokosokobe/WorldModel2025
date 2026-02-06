@@ -18,6 +18,15 @@ Page Operation Actions:
 ```press [key_comb]```:  Simulates the pressing of a key combination on the keyboard (e.g., Ctrl+v).
 ```scroll [down]``` or ```scroll [up]```: Scroll the page up or down.
 
+Global Keyboard Actions (no element id needed):
+```keyboard_type [text]```: Type text into the currently focused element.
+
+In-page Actions:
+```page_find [query]```: Use the browser's find-in-page (Ctrl+F) to search for query on the current page. Use this when the page is long and you need to quickly locate a phrase.
+```page_zoom[in]``` or ```page_zoom[out]```: Zoom the page in or out to make small text or UI elements easier to read/click.
+- Examples: ```page_zoom [in]```, ```page_zoom [out]```, ```page_zoom [reset]```
+- You may also use numeric zoom like ```page_zoom [125%]``` or ```page_zoom [1.25]```.
+
 Tab Management Actions:
 ```new_tab```: Open a new, empty browser tab.
 ```tab_focus [tab_index]```: Switch the browser's focus to a specific tab using its index.
@@ -95,6 +104,16 @@ OBJECTIVE: Help me find the cheapest dark colored guitar.
 PREVIOUS ACTION: None""",
 			"Let's think step-by-step. The objective is to find the cheapest dark colored guitar on the site. The site has a search box whose ID is [5]. I can search for guitars by entering \"guitar\". I can submit this by pressing the Enter afterwards. In summary, the next action I will perform is ```type [5] [guitar] [1]```",
             "agent/prompts/som_examples/som_example3.png"
+		),
+        (
+			"""OBSERVATION:
+[Page 1/1]
+(SoM screenshot shows search results for 'hp inkjet'. Some UI text is small and hard to read/click precisely.)
+URL: http://localhost:7770/catalogsearch/result/?q=hp+inkjet
+OBJECTIVE: Open the 'Advanced Search' link at the top of the page, but the header is small.
+PREVIOUS ACTION: None""",
+			"Let's think step-by-step. If the header elements are small, zooming in can make the link easier to read and click accurately. I will zoom in once, then click the 'Advanced Search' link.\n\nIn summary, the next action I will perform is ```page_zoom[in]```",
+			"agent/prompts/som_examples/som_example1.png"
 		),
 	],
 	"template": """OBSERVATION: {observation}

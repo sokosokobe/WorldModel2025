@@ -11,13 +11,16 @@ import random
 import subprocess
 import tempfile
 import time
+import sys
 from pathlib import Path
-from typing import List
+from typing import Optional, Dict, List, Any
+import platform
 
 import openai
 import requests
 import torch
 from PIL import Image
+import re
 
 from agent import (
     PromptAgent,
@@ -40,11 +43,134 @@ from browser_env.helper_functions import (
 )
 from evaluation_harness import evaluator_router, image_utils
 
+print("=== RUNTIME INFO ===")
+print("sys.executable:", sys.executable)
+print("cwd:", os.getcwd())
+print("platform:", platform.platform())
+print("WSL:", "microsoft" in platform.release().lower())
+print("HOSTNAME:", os.environ.get("COMPUTERNAME") or os.environ.get("HOSTNAME"))
+print("====================")
+
 DATASET = os.environ["DATASET"]
 
 LOG_FOLDER = "log_files"
 Path(LOG_FOLDER).mkdir(parents=True, exist_ok=True)
 LOG_FILE_NAME = f"{LOG_FOLDER}/log_{time.strftime('%Y%m%d%H%M%S', time.localtime())}_{random.randint(0, 10000)}.log"
+
+
+from typing import Optional, Dict, List, Any
+
+# =========================
+# Cart count / add-to-cart detection
+# =========================
+
+# Magento/Luma系の「カートアイコンの個数」候補セレクタ
+_CART_COUNT_SELECTORS = [
+    ".minicart-wrapper .action.showcart .counter.qty .counter-number",
+    ".minicart-wrapper .action.showcart .counter-number",
+    ".minicart-wrapper .action.showcart .counter.qty",
+    "a.action.showcart .counter-number",
+    "a.action.showcart .counter.qty",
+    "a[href*='checkout/cart'] .counter-number",
+    "a[href*='checkout/cart'] .counter.qty",
+]
+
+
+_SUCCESS_MSG_SELECTORS = [
+    "div.message-success",
+    "div.messages div.message-success",
+    "div.page.messages div.message-success",
+]
+
+_ERROR_MSG_SELECTORS = [
+    "div.message-error",
+    "div.messages div.message-error",
+    "div.page.messages div.message-error",
+]
+
+def _extract_int(s: str) -> Optional[int]:
+    if not s:
+        return None
+    m = re.search(r"\d+", s.replace(",", ""))
+    return int(m.group(0)) if m else None
+
+def _first_text_by_selectors(page, selectors, timeout_ms: int = 200) -> Optional[str]:
+    """Return first non-empty innerText among selectors, else None."""
+    for sel in selectors:
+        try:
+            loc = page.locator(sel).first
+            if loc.count() == 0:
+                continue
+            t = loc.inner_text(timeout=timeout_ms).strip()
+            if t:
+                return t
+        except Exception:
+            continue
+    return None
+
+
+def get_cart_count(page) -> int:
+    """
+    Read cart item count from the minicart counter.
+    IMPORTANT: ページ全体の数字を拾わない（50x60 等に引っ張られるため）
+    """
+    for sel in _CART_COUNT_SELECTORS:
+        try:
+            loc = page.locator(sel).first
+            if loc.count() == 0:
+                continue
+            t = loc.inner_text(timeout=200).strip()
+            v = _extract_int(t)
+            if v is not None:
+                return v
+        except Exception:
+            continue
+
+    # 最終手段: "My Cart 3 items" みたいにリンクテキストに数字が混ざる場合
+    try:
+        txt = page.locator("a:has-text('My Cart')").first.inner_text(timeout=200)
+        v = _extract_int(txt)
+        return v if v is not None else 0
+    except Exception:
+        return 0
+
+
+def detect_add_to_cart(page, before_count: int) -> tuple[str, int, str, Dict[str, Any]]:
+    """
+    Returns:
+      status: 'added' | 'error' | 'no_change'
+      after_count
+      feedback_str
+      event_dict (meta_data に入れる用)
+    """
+    after_count = get_cart_count(page)
+
+    success_msg = _first_text_by_selectors(page, _SUCCESS_MSG_SELECTORS)
+    error_msg = _first_text_by_selectors(page, _ERROR_MSG_SELECTORS)
+
+    if error_msg:
+        status = "error"
+        feedback = f"[Cart] Add failed: {error_msg}"
+    elif success_msg:
+        status = "added"
+        feedback = f"[Cart] Added (msg): {success_msg}"
+    elif after_count > before_count:
+        status = "added"
+        feedback = f"[Cart] Added: count {before_count} -> {after_count}"
+    else:
+        status = "no_change"
+        feedback = "[Cart] No change"
+
+    evt = {
+        "status": status,
+        "before": before_count,
+        "after": after_count,
+        "success_msg": success_msg or "",
+        "error_msg": error_msg or "",
+        "url": getattr(page, "url", ""),
+    }
+    return status, after_count, feedback, evt
+
 
 logger = logging.getLogger("logger")
 logger.setLevel(logging.INFO)
@@ -61,6 +187,124 @@ logger.addHandler(file_handler)
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 console_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
+
+# ==========================
+# Shopping cart detection helpers
+# ==========================
+
+_CART_ERROR_SUBSTRINGS = [
+    "required option",  # "The product's required option(s) weren't entered"
+    "weren't entered",
+    "wasn't entered",
+    "please specify",
+    "this is a required field",
+    "out of stock",
+]
+
+
+def _extract_ints(text: str) -> list[int]:
+    return [int(x) for x in re.findall(r"\d+", text or "")]
+
+
+def get_cart_count(page) -> int:
+    """
+    Returns the cart item count shown in the header (best-effort).
+    If not found, returns 0.
+    """
+    selectors = [
+        'a:has-text("My Cart")',
+        "a.action.showcart",
+        "div.minicart-wrapper a.action.showcart",
+        "#minicart-wrapper a.action.showcart",
+    ]
+    for sel in selectors:
+        try:
+            loc = page.locator(sel)
+            if loc.count() <= 0:
+                continue
+            txt = loc.first.inner_text(timeout=500) or ""
+            nums = _extract_ints(txt)
+            if nums:
+                # "My Cart 12 12 items" みたいに重複するので max を取る
+                return max(nums)
+        except Exception:
+            pass
+
+    # 予備：よくあるカウンタ
+    for sel in ["span.counter-number", "span.counter.qty", "span.count"]:
+        try:
+            loc = page.locator(sel)
+            if loc.count() <= 0:
+                continue
+            txt = loc.first.inner_text(timeout=300) or ""
+            nums = _extract_ints(txt)
+            if nums:
+                return max(nums)
+        except Exception:
+            pass
+
+    return 0
+
+
+def _get_cart_message_text(page) -> str | None:
+    """
+    Magento系のメッセージ領域から、表示中メッセージを拾う（best-effort）
+    """
+    msg_selectors = [
+        ".message-success",
+        ".message-error",
+        ".messages .message",
+        ".page.messages",
+        "div.messages",
+    ]
+    for sel in msg_selectors:
+        try:
+            loc = page.locator(sel)
+            if loc.count() <= 0:
+                continue
+            # 目視的に出てるやつだけ拾う
+            t = loc.first.inner_text(timeout=300)
+            t = (t or "").strip()
+            if t:
+                return t
+        except Exception:
+            pass
+    return None
+
+
+def detect_add_to_cart(page, cart_before: int):
+    """
+    Returns (status, cart_after, feedback)
+      status: "success" | "fail" | "info" | "none"
+    """
+    try:
+        page.wait_for_timeout(200)  # 反映待ち（軽く）
+    except Exception:
+        pass
+
+    cart_after = get_cart_count(page)
+    msg = _get_cart_message_text(page)
+
+    status = "none"
+    if cart_after > cart_before:
+        status = "success"
+    elif msg:
+        low = msg.lower()
+        if any(s in low for s in _CART_ERROR_SUBSTRINGS):
+            status = "fail"
+        elif ("added" in low and "cart" in low) or ("shopping cart" in low and "added" in low):
+            status = "success"
+        else:
+            status = "info"
+
+    if status == "none":
+        return "none", cart_after, ""
+
+    short_msg = msg.replace("\n", " ").strip() if msg else ""
+    feedback = f"[Cart] Add {status.upper()}: count {cart_before}->{cart_after}"
+    if short_msg:
+        feedback += f" | {short_msg}"
+    return status, cart_after, feedback
 
 
 def config() -> argparse.Namespace:
@@ -251,6 +495,113 @@ def early_stop(
     return False, ""
 
 
+def _page_eval(page, js: str):
+    """Playwright page.evaluate() を sync/async 両対応で呼ぶ"""
+    try:
+        out = page.evaluate(js)
+        # asyncの場合だけawait
+        if hasattr(out, "__await__"):
+            import asyncio
+            return asyncio.get_event_loop().run_until_complete(out)
+        return out
+    except Exception:
+        return None
+
+
+def get_cart_count(page):
+    """
+    ヘッダの "My Cart 12 items" みたいな表示 or minicartカウンタから個数を取る。
+    取れないときは None。
+    """
+    js = r"""
+    () => {
+      const tryParse = (s) => {
+        if (!s) return null;
+        const m = String(s).replace(/[, \t\r\n]/g, '').match(/(\d+)/);
+        return m ? parseInt(m[1], 10) : null;
+      };
+
+      const selectors = [
+        '.minicart-wrapper .counter-number',
+        '.minicart-wrapper .counter.qty',
+        'a.showcart .counter-number',
+        'a.showcart .counter.qty',
+        'a[href*="checkout/cart"] .counter-number',
+        'a[href*="checkout/cart"] .counter.qty',
+      ];
+
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        const n = tryParse(el && (el.textContent || el.innerText));
+        if (n !== null && !Number.isNaN(n)) return n;
+      }
+
+      // fallback: "My Cart" を含む要素テキストから数字を拾う
+      const els = Array.from(document.querySelectorAll('a, span, div'));
+      for (const el of els) {
+        const t = (el.innerText || el.textContent || '').trim();
+        if (!t) continue;
+        if (/\bMy\s*Cart\b/i.test(t)) {
+          const n = tryParse(t);
+          if (n !== null && !Number.isNaN(n)) return n;
+        }
+      }
+      return null;
+    }
+    """
+    return _page_eval(page, js)
+
+
+def get_cart_messages(page):
+    """
+    Magento系のフラッシュメッセージを拾う（成功/失敗/notice）。
+    """
+    js = r"""
+    () => {
+      const grab = (sel) => Array.from(document.querySelectorAll(sel))
+        .map(e => (e.innerText || e.textContent || '').trim())
+        .filter(Boolean);
+
+      const success = grab('.message-success, .messages .message-success, .messages .success');
+      const error   = grab('.message-error, .messages .message-error, .messages .error');
+      const notice  = grab('.message-notice, .messages .message-notice, .messages .notice');
+
+      return {
+        success: success.slice(0, 2),
+        error: error.slice(0, 2),
+        notice: notice.slice(0, 2),
+      };
+    }
+    """
+    out = _page_eval(page, js)
+    if isinstance(out, dict):
+        return out
+    return {"success": [], "error": [], "notice": []}
+
+
+def detect_add_to_cart(page, before_count):
+    """
+    before_count と比較してカート増加/失敗を判定。
+    戻り値: (status, after_count, feedback_str)
+      status: "added" | "failed" | "nochange"
+    """
+    after_count = get_cart_count(page)
+    msgs = get_cart_messages(page)
+
+    # 失敗メッセージ優先
+    if msgs.get("error"):
+        return "failed", after_count, f"[Cart] Add failed: {msgs['error'][0]}"
+
+    # 個数が増えてたら成功
+    if before_count is not None and after_count is not None and after_count > before_count:
+        return "added", after_count, f"[Cart] Added: count {before_count} -> {after_count}"
+
+    # 成功メッセージだけ出てる場合（count取れない/変化なしでも）
+    if msgs.get("success"):
+        return "added", after_count, f"[Cart] Added (msg): {msgs['success'][0]}"
+
+    return "nochange", after_count, "[Cart] No change"
+
 def test(
     args: argparse.Namespace,
     config_file_list: list[str]
@@ -269,10 +620,9 @@ def test(
         "repeating_action": args.repeating_action_failure_th,
     }
 
-    if args.observation_type in [
-        "accessibility_tree_with_captioner",
-        "image_som",
-    ]:
+    caption_image_fn = None
+
+    if args.observation_type == "accessibility_tree_with_captioner":
         device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         caption_image_fn = image_utils.get_captioning_fn(
@@ -348,18 +698,23 @@ def test(
                     cookie_file_name = os.path.basename(_c["storage_state"])
                     comb = get_site_comb_from_filepath(cookie_file_name)
                     temp_dir = tempfile.mkdtemp()
+
+                    repo_root = Path(__file__).resolve().parent  # run.py があるディレクトリ
+
                     # subprocess to renew the cookie
                     subprocess.run(
                         [
-                            "python",
-                            "browser_env/auto_login.py",
+                            sys.executable, # ← "python" じゃなくて今使ってるpython
+                            "-m", "browser_env.auto_login", # module実行
                             "--auth_folder",
                             temp_dir,
                             "--site_list",
                             *comb,
-                        ]
+                        ],
+                        check=True,
+                        cwd=str(repo_root)
                     )
-                    _c["storage_state"] = f"{temp_dir}/{cookie_file_name}"
+                    _c["storage_state"] = str(Path(temp_dir) / cookie_file_name)
                     assert os.path.exists(_c["storage_state"])
                     # update the config file
                     config_file = f"{temp_dir}/{os.path.basename(config_file)}"
@@ -426,8 +781,32 @@ def test(
 
                 if action["action_type"] == ActionTypes.STOP:
                     break
+                
+                # --- Add-to-cart検知: step前のカート数 ---
+                cart_before = 0
+                try:
+                    cart_before = get_cart_count(env.page)
+                except Exception:
+                    pass
 
                 obs, _, terminated, _, info = env.step(action)
+                # --- Add-to-cart検知: step後の判定 ---
+                try:
+                    cart_status, cart_after, cart_feedback, cart_evt = detect_add_to_cart(env.page, cart_before)
+
+                    # 次の next_action() に渡す（prompt側で見える前提）
+                    meta_data["last_cart_event"] = cart_evt
+
+                    # 次の思考で見えるように action_history に追記（重要）
+                    try:
+                        meta_data["action_history"][-1] = meta_data["action_history"][-1] + " | " + cart_feedback
+                    except Exception:
+                        pass
+
+                    logger.info(cart_feedback)
+                except Exception:
+                    pass
+
                 state_info = {"observation": obs, "info": info}
                 trajectory.append(state_info)
 
@@ -541,7 +920,7 @@ if __name__ == "__main__":
         test_file_list.append(os.path.join(test_config_base_dir, f"{i}.json"))
     test_file_list = get_unfinished(test_file_list, args.result_dir)
     print(f"Total {len(test_file_list)} tasks left")
-    args.render = False
+    # args.render = False
     args.render_screenshot = True
     args.save_trace_enabled = True
 

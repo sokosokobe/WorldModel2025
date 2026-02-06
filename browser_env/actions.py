@@ -129,6 +129,14 @@ def action2str(
             case ActionTypes.CLICK:
                 # [ID=X] xxxxx
                 action_str = f"click [{element_id}] where [{element_id}] is {semantic_element}"
+            case ActionTypes.KEYBOARD_TYPE:
+                action_str = f"keyboard_type [{action['text']}]"
+            case ActionTypes.PAGE_FIND:
+                q = "".join([_id2key[i] for i in action["text"]]).strip()
+                action_str = f"page_find [{q}]"
+            case ActionTypes.PAGE_ZOOM:
+                mode = action["key_comb"]
+                action_str = f"page_zoom[{mode}]"
             case ActionTypes.TYPE:
                 text = "".join([_id2key[i] for i in action["text"]])
                 action_str = f"type [{element_id}] [{text}] where [{element_id}] is {semantic_element}"
@@ -170,6 +178,13 @@ def action2str(
                 action_str = f"click [{element_id}] where [{element_id}]"
             case ActionTypes.CLEAR:
                 action_str = f"clear [{element_id}] where [{element_id}] is {semantic_element}"
+            case ActionTypes.KEYBOARD_TYPE:
+                action_str = f"keyboard_type [{action['text']}]"
+            case ActionTypes.PAGE_FIND:
+                action_str = f"page_find[{action['query']}]"
+            case ActionTypes.PAGE_ZOOM:
+                mode = action["key_comb"]
+                action_str = f"page_zoom[{mode}]"
             case ActionTypes.TYPE:
                 text = "".join([_id2key[i] for i in action["text"]])
                 action_str = (
@@ -305,6 +320,13 @@ def action2create_function(action: Action) -> str:
         case ActionTypes.STOP:
             return f'create_stop_action({repr(action["answer"])})'
 
+        case ActionTypes.PAGE_FIND:
+            q = "".join([_id2key[i] for i in action["text"]]).strip()
+            return f"create_page_find_action({q!r})"
+        case ActionTypes.PAGE_ZOOM:
+            return f"create_page_zoom_action({action['key_comb']!r})"
+
+
     raise ValueError(f"Invalid action type: {action['action_type']}")
 
 
@@ -341,6 +363,11 @@ class ActionTypes(IntEnum):
     STOP = 17
     CLEAR = 18
     UPLOAD = 19
+
+    # add
+    PAGE_FIND = 20
+    PAGE_ZOOM = 21
+    
     def __str__(self) -> str:
         return f"ACTION_TYPES.{self.name}"
 
@@ -375,6 +402,10 @@ def is_equivalent(a: Action, b: Action) -> bool:
                 return a["pw_code"] == b["pw_code"]
             else:
                 return False
+        case ActionTypes.PAGE_FIND:
+            return a["text"] == b["text"]
+        case ActionTypes.PAGE_ZOOM:
+            return a["key_comb"] == b["key_comb"]
         case ActionTypes.PAGE_FOCUS:
             return a["page_number"] == b["page_number"]
         case ActionTypes.NEW_TAB:
@@ -716,18 +747,56 @@ def create_upload_action(
     )
     return action
 
+# @beartype
+# def create_keyboard_type_action(keys: list[int | str] | str) -> Action:
+#     """Return a valid action object with type TYPE."""
+#     action = create_none_action()
+#     action.update(
+#         {
+#             "action_type": ActionTypes.KEYBOARD_TYPE,
+#             "text": _keys2ids(keys),
+#         }
+#     )
+#     return action
+
 @beartype
-def create_keyboard_type_action(keys: list[int | str] | str) -> Action:
+def create_keyboard_type_action(text: str | list[int | str]) -> Action:
     """Return a valid action object with type TYPE."""
     action = create_none_action()
     action.update(
         {
             "action_type": ActionTypes.KEYBOARD_TYPE,
-            "text": _keys2ids(keys),
+            "text": _keys2ids(text)
         }
     )
     return action
 
+@beartype
+def create_page_find_action(query: str) -> Action:
+    action = create_none_action()
+    action.update(
+        {
+            "action_type": ActionTypes.PAGE_FIND,
+            "text": _keys2ids(query)
+        }
+    )
+    return action
+
+@beartype
+def create_page_zoom_action(mode: str) -> Action:
+    """
+    mode examples:
+      - "in" / "out" / "reset"
+      - "125%" / "1.25" / "100"
+    """
+    action = create_none_action()
+    action.update(
+        {
+            "action_type": ActionTypes.PAGE_ZOOM,
+            "key_comb": mode.strip(),
+        }
+    )
+    return action
 
 @beartype
 def create_click_action(
@@ -950,6 +1019,83 @@ async def aexecute_mouse_hover(left: float, top: float, page: APage) -> None:
         left * viewport_size["width"], top * viewport_size["height"]
     )
 
+# =============================================================
+# actions.py 修正ガイド (コピペ用)
+# =============================================================
+
+# ステップ1: 以下の関数を actions.py の約950行目
+#           (execute_mouse_click関数の直前) に追加
+
+# --- ここから追加 ---
+
+def _try_click_element_by_js(page: Page, element_id: str) -> bool:
+    """
+    Try to click an element using JavaScript.
+    Handles hidden inputs (radio buttons, checkboxes) in Magento swatches.
+    
+    Returns True if JS click was successful, False otherwise.
+    """
+    js_code = f"""
+    (() => {{
+        // Find element by data-label-id (SoM annotation)
+        let el = document.querySelector('[data-label-id="{element_id}"]');
+        
+        // If not found, try other common selectors
+        if (!el) {{
+            const allLabels = document.querySelectorAll('[data-label-id]');
+            for (const label of allLabels) {{
+                if (label.getAttribute('data-label-id') === '{element_id}') {{
+                    el = label;
+                    break;
+                }}
+            }}
+        }}
+        
+        if (!el) return {{ success: false, reason: 'element_not_found' }};
+        
+        const tagName = el.tagName.toUpperCase();
+        const inputType = (el.type || '').toLowerCase();
+        
+        // Special handling for radio buttons and checkboxes
+        if (tagName === 'INPUT' && (inputType === 'radio' || inputType === 'checkbox')) {{
+            // Method 1: Click parent swatch-option container
+            const swatch = el.closest('.swatch-option');
+            if (swatch) {{
+                swatch.click();
+                return {{ success: true, method: 'swatch_container' }};
+            }}
+            
+            // Method 2: Click associated label
+            const label = document.querySelector('label[for="' + el.id + '"]');
+            if (label) {{
+                label.click();
+                return {{ success: true, method: 'label' }};
+            }}
+            
+            // Method 3: Direct click + trigger change event
+            el.click();
+            el.checked = true;
+            el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+            el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+            return {{ success: true, method: 'direct_with_events' }};
+        }}
+        
+        // For other elements, return false to use coordinate-based click
+        return {{ success: false, reason: 'not_special_input' }};
+    }})()
+    """
+    
+    try:
+        result = page.evaluate(js_code)
+        if result and result.get('success'):
+            page.wait_for_timeout(100)
+            return True
+        return False
+    except Exception as e:
+        print(f"[_try_click_element_by_js] Error: {e}")
+        return False
+
+# --- ここまで追加 ---
 
 def execute_mouse_click(left: float, top: float, page: Page) -> None:
     """Click at coordinates (left, top)."""
@@ -1001,12 +1147,31 @@ def execute_keyboard_type(text: str, page: Page) -> None:
     """Fill the focused element with text."""
     page.keyboard.type(text)
 
-
 @beartype
 async def aexecute_keyboard_type(text: str, page: APage) -> None:
     """Fill the focused element with text."""
     await page.keyboard.type(text)
 
+@beartype
+def execute_page_find(query_ids: list[int], page: Page) -> None:
+    query = "".join([_id2key[i] for i in query_ids]).strip()
+    if not query:
+        return
+    page.keyboard.press("Control+F")
+    page.keyboard.type(query)
+    page.keyboard.press("Enter")
+    page.keyboard.press("Escape")  # 邪魔なら閉じる
+
+
+@beartype
+async def aexecute_page_find(query_ids: list[int], page: APage) -> None:
+    query = "".join([_id2key[i] for i in query_ids]).strip()
+    if not query:
+        return
+    await page.keyboard.press("Control+F")
+    await page.keyboard.type(query)
+    await page.keyboard.press("Enter")
+    await page.keyboard.press("Escape")
 
 @beartype
 def execute_click_current(page: Page) -> None:
@@ -1018,7 +1183,6 @@ def execute_click_current(page: Page) -> None:
             if locators.count():
                 break
     locators.click()
-
 
 @beartype
 async def aexecute_click_current(page: APage) -> None:
@@ -1034,6 +1198,74 @@ async def aexecute_click_current(page: APage) -> None:
     await locators.click()
     await page.wait_for_load_state("load")
 
+@beartype
+def _parse_zoom_to_css_percent(s: str) -> str:
+    s = s.strip()
+    if not s:
+        return "100%"
+
+    # "125%" 形式
+    if s.endswith("%"):
+        num = s[:-1].strip()
+        try:
+            v = float(num)
+            v = max(25.0, min(300.0, v))  # 25%～300%に制限
+            return f"{v:.0f}%"
+        except Exception:
+            return "100%"
+
+    # "1.25" 形式（倍率）
+    try:
+        v = float(s)
+        v = max(0.25, min(3.0, v))
+        return f"{v*100:.0f}%"
+    except Exception:
+        return "100%"
+
+@beartype
+def execute_page_zoom(mode: str, page: Page) -> None:
+    m = mode.strip().lower()
+    # "in/out/reset" or "1.25/125%"
+    if m in ["reset", "1", "1.0", "100", "100%"]:
+        scale = 1.0
+    elif m in ["in", "+"]:
+        scale = 1.25
+    elif m in ["out", "-"]:
+        scale = 0.8
+    elif m.endswith("%"):
+        scale = float(m[:-1]) / 100.0
+    else:
+        scale = float(m)
+
+    page.evaluate(
+        """(s) => {
+            document.body.style.transformOrigin = "0 0";
+            document.body.style.transform = `scale(${s})`;
+        }""",
+        scale,
+    )
+
+async def aexecute_page_zoom(mode: str, page: APage) -> None:
+    m = mode.strip().lower()
+    # "in/out/reset" or "1.25/125%"
+    if m in ["reset", "1", "1.0", "100", "100%"]:
+        scale = 1.0
+    elif m in ["in", "+"]:
+        scale = 1.25
+    elif m in ["out", "-"]:
+        scale = 0.8
+    elif m.endswith("%"):
+        scale = float(m[:-1]) / 100.0
+    else:
+        scale = float(m)
+
+    await page.evaluate(
+        """(s) => {
+            document.body.style.transformOrigin = "0 0";
+            document.body.style.transform = `scale(${s})`;
+        }""",
+        scale,
+    )
 
 @beartype
 def execute_type(keys: list[int], page: Page) -> None:
@@ -1295,15 +1527,28 @@ def execute_action(
             execute_key_press('Backspace', page)
         case ActionTypes.MOUSE_HOVER:
             execute_mouse_hover(action["coords"][0], action["coords"][1], page)
+
         case ActionTypes.KEYBOARD_TYPE:
             execute_type(action["text"], page)
+        case ActionTypes.PAGE_FIND:
+            execute_page_find(action["text"], page)
+        case ActionTypes.PAGE_ZOOM:
+            execute_page_zoom(action["key_comb"], page)
         case ActionTypes.CLICK:
             # check each kind of locator in order
             # TODO[shuyanzh]: order is temp now
             if action["element_id"]:
                 element_id = action["element_id"]
                 element_center = obseration_processor.get_element_center(element_id)  # type: ignore[attr-defined]
-                execute_mouse_click(element_center[0], element_center[1], page)
+                # execute_mouse_click(element_center[0], element_center[1], page)
+
+                # Magento swatch workaround: try JS click first for hidden inputs
+                click_success = _try_click_element_by_js(page, element_id)
+                
+                if not click_success:
+                    # Fallback to coordinate-based click
+                    execute_mouse_click(element_center[0], element_center[1], page)
+                    
             elif action["element_role"] and action["element_name"]:
                 element_role = int(action["element_role"])
                 element_name = action["element_name"]
@@ -1446,6 +1691,10 @@ async def aexecute_action(
             )
         case ActionTypes.KEYBOARD_TYPE:
             await aexecute_type(action["text"], page)
+        case ActionTypes.PAGE_FIND:
+            await aexecute_page_find(page, action)
+        case ActionTypes.PAGE_ZOOM:
+            await aexecute_page_zoom(page, action)
 
         case ActionTypes.CLICK:
             # check each kind of locator in order
@@ -1766,6 +2015,30 @@ def create_id_based_action(action_str: str) -> Action:
             if enter_flag == "1":
                 text += "\n"
             return create_type_action(text=text, element_id=element_id)
+        case "keyboard_type":
+            # ex: keyboard_type [red blanket]
+            match = re.search(r"keyboard_type\s*\[(?P<text>.+?)\]\s*$", action_str, flags=re.DOTALL)
+            if not match:
+                raise ActionParsingError(
+                    f"Invalid keyboard_type action: {action_str}. Expected: keyboard_type [text]"
+                )
+            return create_keyboard_type_action(match.group("text").strip())
+        case "page_find":
+            # ex: page_find[red blanket]
+            match = re.search(r"page_find\s*\[(?P<q>.+?)\]\s*$", action_str, flags=re.DOTALL)
+            if not match:
+                raise ActionParsingError(
+                    f"Invalid page_find action: {action_str}. Expected: page_find [query]"
+                )
+            return create_page_find_action(match.group("q").strip())
+        case "page_zoom":
+            # ex: page_zoom [125%]  or page_zoom [1.25]
+            match = re.search(r"page_zoom\s*\[(?P<z>.+?)\]\s*$", action_str, flags=re.DOTALL)
+            if not match:
+                raise ActionParsingError(
+                    f"Invalid page_zoom action: {action_str}. Expected: page_zoom [level]"
+                )
+            return create_page_zoom_action(match.group("z").strip())
         case "press":
             match = re.search(r"press ?\[(.+)\]", action_str)
             if not match:
