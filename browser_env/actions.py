@@ -124,7 +124,7 @@ def action2str(
         "id_accessibility_tree",
         "id_accessibility_tree_with_captioner",
     ]:
-        element_id = action["element_id"]
+        element_id = action.get("element_id", "")
         match action["action_type"]:
             case ActionTypes.CLICK:
                 # [ID=X] xxxxx
@@ -171,7 +171,7 @@ def action2str(
                     f"Unknown action type {action['action_type']}"
                 )
     elif action_set_tag == "som":
-        element_id = action["element_id"]
+        element_id = action("element_id", "")
         match action["action_type"]:
             case ActionTypes.CLICK:
                 # [ID=X] xxxxx
@@ -181,7 +181,9 @@ def action2str(
             case ActionTypes.KEYBOARD_TYPE:
                 action_str = f"keyboard_type [{action['text']}]"
             case ActionTypes.PAGE_FIND:
-                action_str = f"page_find[{action['query']}]"
+                # action_str = f"page_find[{action['query']}]"
+                q = "".join([_id2key[i] for i in action.get("text", [])]).strip()
+                action_str = f"page_find [{q}]"
             case ActionTypes.PAGE_ZOOM:
                 mode = action["key_comb"]
                 action_str = f"page_zoom[{mode}]"
@@ -782,6 +784,8 @@ def create_page_find_action(query: str) -> Action:
     )
     return action
 
+
+
 @beartype
 def create_page_zoom_action(mode: str) -> Action:
     """
@@ -1152,26 +1156,723 @@ async def aexecute_keyboard_type(text: str, page: APage) -> None:
     """Fill the focused element with text."""
     await page.keyboard.type(text)
 
-@beartype
+# @beartype
+# def execute_page_find(query_ids: list[int], page: Page) -> None:
+#     query = "".join([_id2key[i] for i in query_ids]).strip()
+#     if not query:
+#         return
+#     page.keyboard.press("Control+F")
+#     page.keyboard.type(query)
+#     page.keyboard.press("Enter")
+#     page.keyboard.press("Escape")  # 邪魔なら閉じる
+
+@beartype  
 def execute_page_find(query_ids: list[int], page: Page) -> None:
+    """
+    ページ全体を検索し、さらにコメント風要素内のマッチ数も別途表示。
+    コメント内は緑、それ以外は黄色でハイライトする。
+    """
     query = "".join([_id2key[i] for i in query_ids]).strip()
     if not query:
         return
-    page.keyboard.press("Control+F")
-    page.keyboard.type(query)
-    page.keyboard.press("Enter")
-    page.keyboard.press("Escape")  # 邪魔なら閉じる
+    
+    # JavaScript内でスクロール→検索を実行（非同期）
+    js = r"""
+    async (q) => {
+        const query = (q || "").trim();
+        
+        // === ステップ0: 遅延読み込みコンテンツをロードするためスクロール ===
+        const scrollAndLoad = async () => {
+            let prevHeight = 0;
+            for (let i = 0; i < 50; i++) {  // 最大50回
+                const currHeight = document.body.scrollHeight;
+                if (currHeight === prevHeight) {
+                    // 念のためもう一度待機
+                    await new Promise(r => setTimeout(r, 500));
+                    if (document.body.scrollHeight === currHeight) break;
+                }
+                prevHeight = currHeight;
+                window.scrollTo(0, document.body.scrollHeight);
+                await new Promise(r => setTimeout(r, 300));  // 300ms待機
+            }
+            // 先頭に戻る
+            window.scrollTo(0, 0);
+            await new Promise(r => setTimeout(r, 200));
+        };
+        
+        await scrollAndLoad();
+        
+        // 既存のハイライトを除去
+        const oldMarks = Array.from(document.querySelectorAll("mark.__vwa_find__"));
+        for (const m of oldMarks) {
+            const t = document.createTextNode(m.textContent || "");
+            m.replaceWith(t);
+        }
 
+        // バナー作成/取得
+        let banner = document.getElementById("__vwa_find_banner__");
+        if (!banner) {
+            banner = document.createElement("div");
+            banner.id = "__vwa_find_banner__";
+            banner.style.position = "fixed";
+            banner.style.top = "8px";
+            banner.style.right = "8px";
+            banner.style.zIndex = "2147483647";
+            banner.style.padding = "10px 14px";
+            banner.style.fontSize = "13px";
+            banner.style.fontFamily = "monospace";
+            banner.style.background = "rgba(0,0,0,0.9)";
+            banner.style.color = "white";
+            banner.style.borderRadius = "8px";
+            banner.style.maxWidth = "50vw";
+            banner.style.whiteSpace = "pre-wrap";
+            banner.style.lineHeight = "1.6";
+            banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+            document.body.appendChild(banner);
+        }
+
+        if (!query) {
+            banner.textContent = "Find: (empty)";
+            return { total: 0 };
+        }
+
+        // コメント要素を検出するセレクタ（複数サイト対応）
+        // コメント専用セレクタ（コメント内のテキストを確実に検出）
+        const commentSelectors = [
+            // Reddit系（コメント専用セレクタ）
+            ".thing.comment",  // コメントコンテナ（明示的）
+            ".comment",  // コメントコンテナ
+            ".thing.comment .usertext-body",  // コメント内のテキストボディ
+            ".thing.comment .entry",  // コメント内のエントリ
+            ".thing.comment .md",  // コメント内のマークダウン
+            ".sitetable.nestedlisting > .thing.comment",  // ネストされたコメントリスト
+            ".commentarea .thing.comment",  // コメントエリア内
+            "[data-testid='comment']", ".Comment",
+            // 一般的なコメント/レビュー
+            ".comment-content", ".comment-body", ".comment-text",
+            // Postmill系（BEM記法 - アンダースコア2つ）
+            ".comment__main",  // コメントメイン
+            ".comment__body",  // コメント本文
+            ".comment__content",  // コメントコンテンツ
+            ".comment__row",  // コメント行
+            ".review", ".review-content", ".review-body", ".review-text",
+            // クラス名にcommentを含む要素
+            "[class*='comment-item']", "[class*='commentItem']",
+            "[class*='review-item']", "[class*='reviewItem']",
+            // Magento/Shoppingサイト
+            ".product-reviews", ".review-item", ".review-details"
+        ];
+        
+        // OPの投稿本文を示すセレクタ（これらの要素とその子孫はコメントから除外）
+        const opSelectors = [
+            ".thing.link",           // メイン投稿
+            ".link > .entry",        // メイン投稿のエントリ
+            ".link .usertext-body",  // OPの投稿本文
+            ".link .expando",        // 展開されたOP本文
+            ".self-text",            // セルフポスト本文
+            // Postmill系
+            ".submission__body",     // OPの投稿本文
+            ".submission__content",  // OPのコンテンツ
+            ".submission__inner"     // OPの内部要素
+        ];
+        
+        const qLower = query.toLowerCase();
+        let totalMatches = 0;
+        let commentMatches = 0;
+        let commentsWithMatch = 0;
+        
+        // OP要素を収集
+        const opElements = [];
+        for (const sel of opSelectors) {
+            try {
+                document.querySelectorAll(sel).forEach(el => opElements.push(el));
+            } catch(e) {}
+        }
+        
+        // 要素がOP要素内かどうかをチェックする関数
+        function isInOP(el) {
+            for (const op of opElements) {
+                if (op.contains(el) || op === el) return true;
+            }
+            return false;
+        }
+        
+        // コメントのユニークIDを取得する関数
+        function getCommentId(el) {
+            // data-fullnameを試す（Reddit標準）
+            const fullname = el.getAttribute('data-fullname');
+            if (fullname) return fullname;
+            
+            // data-thing-id, data-thingidを試す
+            const thingId = el.getAttribute('data-thing-id') || el.getAttribute('data-thingid');
+            if (thingId) return thingId;
+            
+            // id属性を試す
+            if (el.id && el.id !== '') return 'id::' + el.id;
+            
+            // パーマリンクを試す
+            const permalink = el.querySelector('a[href*="/comment/"], a.bylink, .bylink, a[data-event-action="permalink"]');
+            if (permalink && permalink.getAttribute('href')) {
+                return 'permalink::' + permalink.getAttribute('href');
+            }
+            
+            // 著者名 + タイムスタンプの組み合わせ
+            const author = el.querySelector('.author, [class*="author"], .username');
+            const time = el.querySelector('time, .live-timestamp, [datetime], .tagline time');
+            if (author || time) {
+                const authorText = author ? author.textContent.trim() : 'unknown';
+                const timeText = time ? (time.getAttribute('datetime') || time.getAttribute('title') || time.textContent.trim()) : '';
+                if (authorText !== 'unknown' || timeText !== '') {
+                    return 'author_time::' + authorText + '::' + timeText;
+                }
+            }
+            
+            // 最終手段：要素のテキスト内容の先頭部分
+            const textContent = el.textContent.replace(/\\s+/g, ' ').trim().slice(0, 80);
+            return 'text::' + textContent;
+        }
+        
+        // コメント本文要素を直接収集（ネスト関係なく各コメントの本文を個別にカウント）
+        // 優先度の高いセレクタ（コメント本文を直接指す）
+        const bodySelectors = [
+            ".comment__body",           // Postmill - コメント本文
+            ".comment-body",            // 一般的
+            ".comment-content",         // 一般的
+            ".comment-text",            // 一般的
+            ".usertext-body .md",       // Reddit - マークダウン本文
+            ".review-body",             // レビュー本文
+            ".review-content",          // レビュー本文
+            ".review-text",             // レビュー本文
+        ];
+        
+        // まず本文要素で試す
+        let commentBodies = [];
+        for (const sel of bodySelectors) {
+            try {
+                const found = document.querySelectorAll(sel);
+                if (found.length > 0) {
+                    found.forEach(el => {
+                        if (!isInOP(el)) {
+                            commentBodies.push(el);
+                        }
+                    });
+                    if (commentBodies.length > 0) break;  // 見つかったらそのセレクタを使う
+                }
+            } catch(e) {}
+        }
+        
+        // 本文要素が見つからない場合、従来のコンテナセレクタを使う
+        if (commentBodies.length === 0) {
+            const commentElements = new Set();
+            for (const sel of commentSelectors) {
+                try {
+                    document.querySelectorAll(sel).forEach(el => {
+                        if (!isInOP(el)) {
+                            commentElements.add(el);
+                        }
+                    });
+                } catch(e) {}
+            }
+            
+            // この場合のみネスト除去（コンテナ同士の重複を防ぐ）
+            for (const el of commentElements) {
+                let isNested = false;
+                for (const other of commentElements) {
+                    if (other !== el && other.contains(el)) {
+                        isNested = true;
+                        break;
+                    }
+                }
+                if (!isNested) {
+                    commentBodies.push(el);
+                }
+            }
+        }
+        
+        const topLevelComments = commentBodies;
+        const commentIdMap = new Map();
+        for (const el of topLevelComments) {
+            const cid = getCommentId(el);
+            commentIdMap.set(cid, el);
+        }
+
+        // テキストノードを走査
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode: (node) => {
+                if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+                const p = node.parentElement;
+                if (!p) return NodeFilter.FILTER_REJECT;
+                const tag = p.tagName ? p.tagName.toLowerCase() : "";
+                if (tag === "script" || tag === "style" || tag === "noscript" || tag === "mark") {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        
+        // どのコメントがマッチを含むか追跡（IDベースで重複排除）
+        const matchedCommentIds = new Set();
+        
+        // 単語境界を使った正規表現（完全一致のみ）
+        const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+        const wordRegex = new RegExp('\\b' + escapedQuery + '\\b', 'gi');
+
+        for (const node of nodes) {
+            const text = node.nodeValue;
+            
+            // 単語境界で完全一致するかチェック
+            const matches = [...text.matchAll(wordRegex)];
+            if (matches.length === 0) continue;
+            
+            // このノードがコメント要素内かチェック
+            let isInComment = false;
+            let parentComment = null;
+            for (const cel of topLevelComments) {
+                if (cel.contains(node)) {
+                    isInComment = true;
+                    parentComment = cel;
+                    break;
+                }
+            }
+
+            // ハイライト処理
+            const frag = document.createDocumentFragment();
+            let lastIndex = 0;
+            
+            for (const match of matches) {
+                const matchStart = match.index;
+                const matchText = match[0];
+                
+                // マッチ前のテキスト
+                if (matchStart > lastIndex) {
+                    frag.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
+                }
+                
+                const mark = document.createElement("mark");
+                mark.className = "__vwa_find__";
+                // コメント内は緑、それ以外は黄色
+                mark.style.background = isInComment ? "#90EE90" : "#FFFF00";
+                mark.style.color = "black";
+                mark.style.padding = "1px 3px";
+                mark.style.borderRadius = "2px";
+                mark.textContent = matchText;
+                frag.appendChild(mark);
+                
+                totalMatches += 1;
+                if (isInComment) {
+                    commentMatches += 1;
+                    if (parentComment) {
+                        const cid = getCommentId(parentComment);
+                        matchedCommentIds.add(cid);
+                    }
+                }
+                lastIndex = matchStart + matchText.length;
+            }
+            
+            // 残りのテキスト
+            if (lastIndex < text.length) {
+                frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+            }
+            
+            node.parentNode.replaceChild(frag, node);
+        }
+        
+        commentsWithMatch = matchedCommentIds.size;
+
+        // バナーに詳細表示（コメント数を最も目立たせる）
+        let bannerText = `Find: "${query}"\n`;
+        bannerText += `━━━━━━━━━━━━━━━━━━━━\n`;
+        
+        if (topLevelComments.length > 0) {
+            // 最重要：コメント数を最初に大きく表示
+            bannerText += `★ COMMENTS MENTIONING "${query}": ${commentsWithMatch}\n`;
+            bannerText += `   (out of ${topLevelComments.length} total comments)\n`;
+            bannerText += `━━━━━━━━━━━━━━━━━━━━\n`;
+            bannerText += `Occurrences in comments: ${commentMatches}\n`;
+            bannerText += `Total on page: ${totalMatches}`;
+        } else {
+            bannerText += `Total: ${totalMatches} matches\n`;
+            bannerText += `(No comment sections detected)`;
+        }
+        
+        banner.textContent = bannerText;
+        
+        // 最初のマッチにスクロール
+        const firstMark = document.querySelector("mark.__vwa_find__");
+        if (firstMark) {
+            firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        
+        return {
+            total: totalMatches,
+            inComments: commentMatches,
+            commentsWithMatch: commentsWithMatch,
+            totalComments: topLevelComments.length
+        };
+    }
+    """
+    page.evaluate(js, query)
+    page.wait_for_timeout(250)
+
+
+
+# @beartype
+# async def aexecute_page_find(query_ids: list[int], page: APage) -> None:
+#     query = "".join([_id2key[i] for i in query_ids]).strip()
+#     if not query:
+#         return
+#     await page.keyboard.press("Control+F")
+#     await page.keyboard.type(query)
+#     await page.keyboard.press("Enter")
+    # await page.keyboard.press("Escape")
 
 @beartype
 async def aexecute_page_find(query_ids: list[int], page: APage) -> None:
+    """
+    ページ全体を検索し、さらにコメント風要素内のマッチ数も別途表示。
+    コメント内は緑、それ以外は黄色でハイライトする。（async版）
+    """
     query = "".join([_id2key[i] for i in query_ids]).strip()
     if not query:
         return
-    await page.keyboard.press("Control+F")
-    await page.keyboard.type(query)
-    await page.keyboard.press("Enter")
-    await page.keyboard.press("Escape")
+    
+    # JavaScript内でスクロール→検索を実行（非同期）
+    js = r"""
+    async (q) => {
+        const query = (q || "").trim();
+        
+        // === ステップ0: 遅延読み込みコンテンツをロードするためスクロール ===
+        const scrollAndLoad = async () => {
+            let prevHeight = 0;
+            for (let i = 0; i < 50; i++) {  // 最大50回
+                const currHeight = document.body.scrollHeight;
+                if (currHeight === prevHeight) {
+                    // 念のためもう一度待機
+                    await new Promise(r => setTimeout(r, 500));
+                    if (document.body.scrollHeight === currHeight) break;
+                }
+                prevHeight = currHeight;
+                window.scrollTo(0, document.body.scrollHeight);
+                await new Promise(r => setTimeout(r, 300));  // 300ms待機
+            }
+            // 先頭に戻る
+            window.scrollTo(0, 0);
+            await new Promise(r => setTimeout(r, 200));
+        };
+        
+        await scrollAndLoad();
+        
+        // 既存のハイライトを除去
+        const oldMarks = Array.from(document.querySelectorAll("mark.__vwa_find__"));
+        for (const m of oldMarks) {
+            const t = document.createTextNode(m.textContent || "");
+            m.replaceWith(t);
+        }
+
+        // バナー作成/取得
+        let banner = document.getElementById("__vwa_find_banner__");
+        if (!banner) {
+            banner = document.createElement("div");
+            banner.id = "__vwa_find_banner__";
+            banner.style.position = "fixed";
+            banner.style.top = "8px";
+            banner.style.right = "8px";
+            banner.style.zIndex = "2147483647";
+            banner.style.padding = "10px 14px";
+            banner.style.fontSize = "13px";
+            banner.style.fontFamily = "monospace";
+            banner.style.background = "rgba(0,0,0,0.9)";
+            banner.style.color = "white";
+            banner.style.borderRadius = "8px";
+            banner.style.maxWidth = "50vw";
+            banner.style.whiteSpace = "pre-wrap";
+            banner.style.lineHeight = "1.6";
+            banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+            document.body.appendChild(banner);
+        }
+
+        if (!query) {
+            banner.textContent = "Find: (empty)";
+            return { total: 0 };
+        }
+
+        // コメント要素を検出するセレクタ（複数サイト対応）
+        // コメント専用セレクタ（コメント内のテキストを確実に検出）
+        const commentSelectors = [
+            // Reddit系（コメント専用セレクタ）
+            ".thing.comment",  // コメントコンテナ（明示的）
+            ".comment",  // コメントコンテナ
+            ".thing.comment .usertext-body",  // コメント内のテキストボディ
+            ".thing.comment .entry",  // コメント内のエントリ
+            ".thing.comment .md",  // コメント内のマークダウン
+            ".sitetable.nestedlisting > .thing.comment",  // ネストされたコメントリスト
+            ".commentarea .thing.comment",  // コメントエリア内
+            "[data-testid='comment']", ".Comment",
+            // 一般的なコメント/レビュー
+            ".comment-content", ".comment-body", ".comment-text",
+            // Postmill系（BEM記法 - アンダースコア2つ）
+            ".comment__main",  // コメントメイン
+            ".comment__body",  // コメント本文
+            ".comment__content",  // コメントコンテンツ
+            ".comment__row",  // コメント行
+            ".review", ".review-content", ".review-body", ".review-text",
+            // クラス名にcommentを含む要素
+            "[class*='comment-item']", "[class*='commentItem']",
+            "[class*='review-item']", "[class*='reviewItem']",
+            // Magento/Shoppingサイト
+            ".product-reviews", ".review-item", ".review-details"
+        ];
+        
+        // OPの投稿本文を示すセレクタ（これらの要素とその子孫はコメントから除外）
+        const opSelectors = [
+            ".thing.link",           // メイン投稿
+            ".link > .entry",        // メイン投稿のエントリ
+            ".link .usertext-body",  // OPの投稿本文
+            ".link .expando",        // 展開されたOP本文
+            ".self-text",            // セルフポスト本文
+            // Postmill系
+            ".submission__body",     // OPの投稿本文
+            ".submission__content",  // OPのコンテンツ
+            ".submission__inner"     // OPの内部要素
+        ];
+        
+        const qLower = query.toLowerCase();
+        let totalMatches = 0;
+        let commentMatches = 0;
+        let commentsWithMatch = 0;
+        
+        // OP要素を収集
+        const opElements = [];
+        for (const sel of opSelectors) {
+            try {
+                document.querySelectorAll(sel).forEach(el => opElements.push(el));
+            } catch(e) {}
+        }
+        
+        // 要素がOP要素内かどうかをチェックする関数
+        function isInOP(el) {
+            for (const op of opElements) {
+                if (op.contains(el) || op === el) return true;
+            }
+            return false;
+        }
+        
+        // コメントのユニークIDを取得する関数
+        function getCommentId(el) {
+            // data-fullnameを試す（Reddit標準）
+            const fullname = el.getAttribute('data-fullname');
+            if (fullname) return fullname;
+            
+            // data-thing-id, data-thingidを試す
+            const thingId = el.getAttribute('data-thing-id') || el.getAttribute('data-thingid');
+            if (thingId) return thingId;
+            
+            // id属性を試す
+            if (el.id && el.id !== '') return 'id::' + el.id;
+            
+            // パーマリンクを試す
+            const permalink = el.querySelector('a[href*="/comment/"], a.bylink, .bylink, a[data-event-action="permalink"]');
+            if (permalink && permalink.getAttribute('href')) {
+                return 'permalink::' + permalink.getAttribute('href');
+            }
+            
+            // 著者名 + タイムスタンプの組み合わせ
+            const author = el.querySelector('.author, [class*="author"], .username');
+            const time = el.querySelector('time, .live-timestamp, [datetime], .tagline time');
+            if (author || time) {
+                const authorText = author ? author.textContent.trim() : 'unknown';
+                const timeText = time ? (time.getAttribute('datetime') || time.getAttribute('title') || time.textContent.trim()) : '';
+                if (authorText !== 'unknown' || timeText !== '') {
+                    return 'author_time::' + authorText + '::' + timeText;
+                }
+            }
+            
+            // 最終手段：要素のテキスト内容の先頭部分
+            const textContent = el.textContent.replace(/\\s+/g, ' ').trim().slice(0, 80);
+            return 'text::' + textContent;
+        }
+        
+        // コメント本文要素を直接収集（ネスト関係なく各コメントの本文を個別にカウント）
+        // 優先度の高いセレクタ（コメント本文を直接指す）
+        const bodySelectors = [
+            ".comment__body",           // Postmill - コメント本文
+            ".comment-body",            // 一般的
+            ".comment-content",         // 一般的
+            ".comment-text",            // 一般的
+            ".usertext-body .md",       // Reddit - マークダウン本文
+            ".review-body",             // レビュー本文
+            ".review-content",          // レビュー本文
+            ".review-text",             // レビュー本文
+        ];
+        
+        // まず本文要素で試す
+        let commentBodies = [];
+        for (const sel of bodySelectors) {
+            try {
+                const found = document.querySelectorAll(sel);
+                if (found.length > 0) {
+                    found.forEach(el => {
+                        if (!isInOP(el)) {
+                            commentBodies.push(el);
+                        }
+                    });
+                    if (commentBodies.length > 0) break;  // 見つかったらそのセレクタを使う
+                }
+            } catch(e) {}
+        }
+        
+        // 本文要素が見つからない場合、従来のコンテナセレクタを使う
+        if (commentBodies.length === 0) {
+            const commentElements = new Set();
+            for (const sel of commentSelectors) {
+                try {
+                    document.querySelectorAll(sel).forEach(el => {
+                        if (!isInOP(el)) {
+                            commentElements.add(el);
+                        }
+                    });
+                } catch(e) {}
+            }
+            
+            // この場合のみネスト除去（コンテナ同士の重複を防ぐ）
+            for (const el of commentElements) {
+                let isNested = false;
+                for (const other of commentElements) {
+                    if (other !== el && other.contains(el)) {
+                        isNested = true;
+                        break;
+                    }
+                }
+                if (!isNested) {
+                    commentBodies.push(el);
+                }
+            }
+        }
+        
+        const topLevelComments = commentBodies;
+        const commentIdMap = new Map();
+        for (const el of topLevelComments) {
+            const cid = getCommentId(el);
+            commentIdMap.set(cid, el);
+        }
+
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode: (node) => {
+                if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+                const p = node.parentElement;
+                if (!p) return NodeFilter.FILTER_REJECT;
+                const tag = p.tagName ? p.tagName.toLowerCase() : "";
+                if (tag === "script" || tag === "style" || tag === "noscript" || tag === "mark") {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        
+        const matchedCommentIds = new Set();
+        
+        // 単語境界を使った正規表現（完全一致のみ）
+        const escapedQuery = query.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+        const wordRegex = new RegExp('\\b' + escapedQuery + '\\b', 'gi');
+
+        for (const node of nodes) {
+            const text = node.nodeValue;
+            
+            // 単語境界で完全一致するかチェック
+            const matches = [...text.matchAll(wordRegex)];
+            if (matches.length === 0) continue;
+            
+            let isInComment = false;
+            let parentComment = null;
+            for (const cel of topLevelComments) {
+                if (cel.contains(node)) {
+                    isInComment = true;
+                    parentComment = cel;
+                    break;
+                }
+            }
+
+            const frag = document.createDocumentFragment();
+            let lastIndex = 0;
+            
+            for (const match of matches) {
+                const matchStart = match.index;
+                const matchText = match[0];
+                
+                // マッチ前のテキスト
+                if (matchStart > lastIndex) {
+                    frag.appendChild(document.createTextNode(text.slice(lastIndex, matchStart)));
+                }
+                
+                const mark = document.createElement("mark");
+                mark.className = "__vwa_find__";
+                mark.style.background = isInComment ? "#90EE90" : "#FFFF00";
+                mark.style.color = "black";
+                mark.style.padding = "1px 3px";
+                mark.style.borderRadius = "2px";
+                mark.textContent = matchText;
+                frag.appendChild(mark);
+                
+                totalMatches += 1;
+                if (isInComment) {
+                    commentMatches += 1;
+                    if (parentComment) {
+                        const cid = getCommentId(parentComment);
+                        matchedCommentIds.add(cid);
+                    }
+                }
+                lastIndex = matchStart + matchText.length;
+            }
+            
+            // 残りのテキスト
+            if (lastIndex < text.length) {
+                frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+            }
+            
+            node.parentNode.replaceChild(frag, node);
+        }
+        
+        commentsWithMatch = matchedCommentIds.size;
+
+        // バナーに詳細表示（コメント数を最も目立たせる）
+        let bannerText = `Find: "${query}"\n`;
+        bannerText += `━━━━━━━━━━━━━━━━━━━━\n`;
+        
+        if (topLevelComments.length > 0) {
+            // 最重要：コメント数を最初に大きく表示
+            bannerText += `★ COMMENTS MENTIONING "${query}": ${commentsWithMatch}\n`;
+            bannerText += `   (out of ${topLevelComments.length} total comments)\n`;
+            bannerText += `━━━━━━━━━━━━━━━━━━━━\n`;
+            bannerText += `Occurrences in comments: ${commentMatches}\n`;
+            bannerText += `Total on page: ${totalMatches}`;
+        } else {
+            bannerText += `Total: ${totalMatches} matches\n`;
+            bannerText += `(No comment sections detected)`;
+        }
+        
+        banner.textContent = bannerText;
+        
+        const firstMark = document.querySelector("mark.__vwa_find__");
+        if (firstMark) {
+            firstMark.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        
+        return {
+            total: totalMatches,
+            inComments: commentMatches,
+            commentsWithMatch: commentsWithMatch,
+            totalComments: topLevelComments.length
+        };
+    }
+    """
+    await page.evaluate(js, query)
+    await page.wait_for_timeout(250)
 
 @beartype
 def execute_click_current(page: Page) -> None:
@@ -1692,9 +2393,10 @@ async def aexecute_action(
         case ActionTypes.KEYBOARD_TYPE:
             await aexecute_type(action["text"], page)
         case ActionTypes.PAGE_FIND:
-            await aexecute_page_find(page, action)
+            await aexecute_page_find(action["text"], page)
         case ActionTypes.PAGE_ZOOM:
-            await aexecute_page_zoom(page, action)
+            await aexecute_page_zoom(action["key_comb"], page)
+
 
         case ActionTypes.CLICK:
             # check each kind of locator in order
