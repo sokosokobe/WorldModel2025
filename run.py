@@ -10,6 +10,7 @@ import logging
 import os
 import random
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -461,13 +462,14 @@ def test(
                     # subprocess to renew the cookie
                     subprocess.run(
                         [
-                            "python",
+                            sys.executable,
                             "browser_env/auto_login.py",
                             "--auth_folder",
                             temp_dir,
                             "--site_list",
                             *comb,
-                        ]
+                        ],
+                        check=True,
                     )
                     _c["storage_state"] = f"{temp_dir}/{cookie_file_name}"
                     assert os.path.exists(_c["storage_state"])
