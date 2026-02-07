@@ -139,6 +139,7 @@ dmypy.json
 config_files/vwa/test_classifieds/*
 config_files/vwa/test_shopping/*
 config_files/vwa/test_reddit/*
+config_files/vwa/test_*_pickup/*
 config_files/vwa/test_classifieds.json
 config_files/vwa/test_reddit.json
 config_files/vwatest_shopping.json
@@ -149,3 +150,5 @@ cache/*
 agents/prompts/jsons/*
 demo_test_amazon/
 log_files/
+
+/result*
