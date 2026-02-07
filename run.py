@@ -9,6 +9,7 @@ import logging
 import os
 import random
 import subprocess
+import sys
 import tempfile
 import time
 import sys
@@ -697,8 +698,8 @@ def test(
                     # subprocess to renew the cookie
                     subprocess.run(
                         [
-                            sys.executable, # ← "python" じゃなくて今使ってるpython
-                            "-m", "browser_env.auto_login", # module実行
+                            sys.executable,
+                            "browser_env/auto_login.py",
                             "--auth_folder",
                             temp_dir,
                             "--site_list",
