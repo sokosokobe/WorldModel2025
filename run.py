@@ -302,10 +302,9 @@ def test(
         "repeating_action": args.repeating_action_failure_th,
     }
 
-    if args.observation_type in [
-        "accessibility_tree_with_captioner",
-        "image_som",
-    ]:
+    # Captioning model is only needed when the observation itself includes captions.
+    # Loading BLIP2 is heavy and can fail on some local environments; avoid it unless required.
+    if args.observation_type == "accessibility_tree_with_captioner":
         device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         caption_image_fn = image_utils.get_captioning_fn(
