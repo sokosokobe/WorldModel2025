@@ -149,3 +149,5 @@ cache/*
 agents/prompts/jsons/*
 demo_test_amazon/
 log_files/
+
+/result*
