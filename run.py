@@ -614,7 +614,10 @@ def test(
         "repeating_action": args.repeating_action_failure_th,
     }
 
+    # Captioning models are only needed when the observation itself includes captions.
+    # Loading BLIP2 is heavy and can fail on some local environments; avoid it unless required.
     caption_image_fn = None
+    eval_caption_image_fn = None
 
     if args.observation_type == "accessibility_tree_with_captioner":
         device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
@@ -622,27 +625,26 @@ def test(
         caption_image_fn = image_utils.get_captioning_fn(
             device, dtype, args.captioning_model
         )
-    else:
-        caption_image_fn = None
 
     # Load a (possibly different) captioning model for running VQA evals.
-    if DATASET == 'visualwebarena':
-        if (
-            caption_image_fn
-            and args.eval_captioning_model == args.captioning_model
-        ):
+    # NOTE: do NOT load for image_som/image/html runs.
+    if DATASET == "visualwebarena":
+        if caption_image_fn and args.eval_captioning_model == args.captioning_model:
             eval_caption_image_fn = caption_image_fn
         else:
-            eval_caption_image_fn = image_utils.get_captioning_fn(
-                args.eval_captioning_model_device,
-                torch.float16
-                if (
-                    torch.cuda.is_available()
-                    and args.eval_captioning_model_device == "cuda"
+            if "captioner" in args.observation_type:
+                eval_caption_image_fn = image_utils.get_captioning_fn(
+                    args.eval_captioning_model_device,
+                    torch.float16
+                    if (
+                        torch.cuda.is_available()
+                        and args.eval_captioning_model_device == "cuda"
+                    )
+                    else torch.float32,
+                    args.eval_captioning_model,
                 )
-                else torch.float32,
-                args.eval_captioning_model,
-            )
+            else:
+                eval_caption_image_fn = None
     else:
         caption_image_fn = None
         eval_caption_image_fn = None
