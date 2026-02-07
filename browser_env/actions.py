@@ -171,7 +171,7 @@ def action2str(
                     f"Unknown action type {action['action_type']}"
                 )
     elif action_set_tag == "som":
-        element_id = action("element_id", "")
+        element_id = action.get("element_id", "")
         match action["action_type"]:
             case ActionTypes.CLICK:
                 # [ID=X] xxxxx
