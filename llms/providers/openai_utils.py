@@ -12,8 +12,12 @@ import aiolimiter
 import openai
 from openai import AsyncOpenAI, OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL"))
-aclient = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL"))
+client = OpenAI(
+    api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL")
+)
+aclient = AsyncOpenAI(
+    api_key=os.environ["OPENAI_API_KEY"], base_url=os.environ.get("OPENAI_BASE_URL")
+)
 from tqdm.asyncio import tqdm_asyncio
 
 
@@ -290,9 +294,9 @@ def generate_from_openai_chat_completion(
         c = msg.get("content")
         if isinstance(c, list):
             for part in c:
-                if (
-                    isinstance(part, dict)
-                    and part.get("type") in ("image_url", "input_image")
+                if isinstance(part, dict) and part.get("type") in (
+                    "image_url",
+                    "input_image",
                 ):
                     return True
         return False
@@ -305,23 +309,48 @@ def generate_from_openai_chat_completion(
             m["role"] = "user"
         fixed_messages.append(m)
     messages = fixed_messages
-    kwargs: dict[str, Any] = {
+    # 1. 基本の引数を作成（stopはまだ入れない）
+    api_args = {
         "model": model,
         "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "top_p": top_p,
+        "n": 1,
     }
+
+    # 2. stop_token がある場合のみ追加する（Noneを送るとエラーになるため）
+    if stop_token:
+        api_args["stop"] = stop_token
+
+    # 3. モデルに応じたパラメータの切り替え
+    is_new_model = model.startswith("o1") or "gpt-5.2" in model
+
+    if is_new_model:
+        # 新仕様: max_completion_tokens
+        if max_tokens is not None:
+            api_args["max_completion_tokens"] = max_tokens
+
+        # ※ temperatureの扱いはモデルによりますが、エラーが出る場合はここも制御が必要
+        # api_args["temperature"] = 1.0
+    else:
+        # 旧仕様: max_tokens
+        if max_tokens is not None:
+            api_args["max_tokens"] = max_tokens
+
+        api_args["temperature"] = temperature
+        api_args["top_p"] = top_p
+
+    # 4. Seed logic (from origin/main)
     seed = _get_openai_seed()
     if seed is not None:
-        kwargs["seed"] = seed
+        api_args["seed"] = seed
+
+    # 5. API Call with retry/fallback for seed
     try:
-        response = client.chat.completions.create(**kwargs)
+        response = client.chat.completions.create(**api_args)
     except openai.BadRequestError as e:
         # Backwards compatibility: some servers/models may not support `seed`.
         if seed is not None and "seed" in str(e).lower():
-            kwargs.pop("seed", None)
-            response = client.chat.completions.create(**kwargs)
+            api_args.pop("seed", None)
+            response = client.chat.completions.create(**api_args)
         else:
             raise
     answer: str = response.choices[0].message.content
