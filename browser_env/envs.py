@@ -18,6 +18,7 @@ from playwright.sync_api import (
     CDPSession,
     Page,
     Playwright,
+    TimeoutError as PlaywrightTimeoutError,
     ViewportSize,
     expect,
     sync_playwright,
@@ -188,6 +189,9 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
             geolocation=geolocation,
             device_scale_factor=1,
         )
+        nav_timeout_ms = int(os.environ.get("VWA_NAV_TIMEOUT_MS", "30000"))
+        self.context.set_default_timeout(nav_timeout_ms)
+        self.context.set_default_navigation_timeout(nav_timeout_ms)
         if self.save_trace_enabled:
             self.context.tracing.start(screenshots=True, snapshots=True)
 
@@ -202,7 +206,14 @@ class ScriptBrowserEnv(Env[dict[str, Observation], Action]):
                     client = page.context.new_cdp_session(page)
                     client.send("Accessibility.enable")
                     client.detach()
-                page.goto(url)
+                try:
+                    page.goto(
+                        url, wait_until="domcontentloaded", timeout=nav_timeout_ms
+                    )
+                except PlaywrightTimeoutError as e:
+                    raise RuntimeError(
+                        f"Timed out while opening start_url during reset: {url}"
+                    ) from e
             # set the first page as the current page
             self.page = self.context.pages[0]
             self.page.bring_to_front()

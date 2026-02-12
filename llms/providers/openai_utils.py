@@ -343,14 +343,19 @@ def generate_from_openai_chat_completion(
     if seed is not None:
         api_args["seed"] = seed
 
-    # 5. API Call with retry/fallback for seed
+    # 5. Timeout logic (from d09f5a8)
+    request_timeout = float(os.environ.get("OPENAI_REQUEST_TIMEOUT", "120"))
+
+    # 6. API Call with retry/fallback for seed
     try:
-        response = client.chat.completions.create(**api_args)
+        response = client.chat.completions.create(**api_args, timeout=request_timeout)
     except openai.BadRequestError as e:
         # Backwards compatibility: some servers/models may not support `seed`.
         if seed is not None and "seed" in str(e).lower():
             api_args.pop("seed", None)
-            response = client.chat.completions.create(**api_args)
+            response = client.chat.completions.create(
+                **api_args, timeout=request_timeout
+            )
         else:
             raise
     answer: str = response.choices[0].message.content

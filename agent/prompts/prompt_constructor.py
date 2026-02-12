@@ -310,7 +310,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = action_history[-1] if action_history else "None"
+        previous_action_str = meta_data["action_history"][-1]
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),

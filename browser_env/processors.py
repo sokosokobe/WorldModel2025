@@ -15,7 +15,7 @@ import playwright
 import requests
 from gymnasium import spaces
 from PIL import Image, ImageDraw, ImageFont
-from playwright.sync_api import CDPSession, Page, ViewportSize
+from playwright.sync_api import CDPSession, Page, TimeoutError as PlaywrightTimeoutError, ViewportSize
 
 from browser_env.constants import (
     ASCII_CHARSET,
@@ -619,13 +619,19 @@ class TextObervationProcessor(ObservationProcessor):
         return "\n".join(clean_lines)
 
     def fetch_image_related(self, page: Page, browser_info: BrowserInfo) -> str:
+        # For image_som, text-side image captioning is unused and can block reset.
+        if self.observation_type == "image_som":
+            return ""
+
         # Check if the current page is an image url
         if page.url.endswith((".jpg", ".jpeg", ".png")):
             print("NOTE: We are on an image page!!!")
             # Load image from current url and run captioning on it.
             if page.url not in self.url2caption and self.captioning_fn is not None:
                 try:
-                    image = Image.open(requests.get(page.url, stream=True).raw)
+                    image = Image.open(
+                        requests.get(page.url, stream=True, timeout=5).raw
+                    )
                     caption = self.captioning_fn([image])[0].strip()
                     self.url2caption[page.url] = remove_unicode(caption)
                 except Exception as e:
@@ -655,7 +661,9 @@ class TextObervationProcessor(ObservationProcessor):
                             continue
                         else:
                             try:
-                                image = Image.open(requests.get(url, stream=True).raw)
+                                image = Image.open(
+                                    requests.get(url, stream=True, timeout=5).raw
+                                )
                                 image_pixels.append(image)
                                 valid_urls.append(url)
                             except Exception as e:
@@ -1120,40 +1128,45 @@ class ImageObservationProcessor(ObservationProcessor):
 
         if self.observation_type == "image_som":
             # Produce the SoM image, with bounding boxes
-            try:
-                screenshot_bytes = page.screenshot()
-                som_bboxes = self.get_page_bboxes(page)
-                screenshot_img = Image.open(BytesIO(screenshot_bytes))
-                bbox_img, id2center, content_str = self.draw_bounding_boxes(
-                    som_bboxes,
-                    screenshot_img,
-                    viewport_size=self.viewport_size,
-                )
-                self.som_id_info = id2center
-                self.meta_data["obs_nodes_info"] = id2center
-                screenshot_som = np.array(bbox_img)
-                return screenshot_som, content_str
-            except:
-                page.wait_for_event("load")
-                screenshot_bytes = page.screenshot()
-                som_bboxes = self.get_page_bboxes(page)
-                screenshot_img = Image.open(BytesIO(screenshot_bytes))
-                bbox_img, id2center, content_str = self.draw_bounding_boxes(
-                    som_bboxes,
-                    screenshot_img,
-                    viewport_size=self.viewport_size,
-                )
-                self.som_id_info = id2center
-                self.meta_data["obs_nodes_info"] = id2center
-                screenshot_som = np.array(bbox_img)
-                return screenshot_som, content_str
+            for attempt in range(2):
+                try:
+                    screenshot_bytes = page.screenshot()
+                    som_bboxes = self.get_page_bboxes(page)
+                    screenshot_img = Image.open(BytesIO(screenshot_bytes))
+                    bbox_img, id2center, content_str = self.draw_bounding_boxes(
+                        som_bboxes,
+                        screenshot_img,
+                        viewport_size=self.viewport_size,
+                    )
+                    self.som_id_info = id2center
+                    self.meta_data["obs_nodes_info"] = id2center
+                    screenshot_som = np.array(bbox_img)
+                    return screenshot_som, content_str
+                except Exception as e:
+                    if attempt == 0:
+                        try:
+                            page.wait_for_load_state("load", timeout=5000)
+                        except PlaywrightTimeoutError:
+                            pass
+                        continue
+                    raise RuntimeError(
+                        f"Failed to produce image_som observation: {e}"
+                    ) from e
         else:
-            try:
-                screenshot = png_bytes_to_numpy(page.screenshot())
-            except:
-                page.wait_for_event("load")
-                screenshot = png_bytes_to_numpy(page.screenshot())
-            return screenshot, ""
+            for attempt in range(2):
+                try:
+                    screenshot = png_bytes_to_numpy(page.screenshot())
+                    return screenshot, ""
+                except Exception as e:
+                    if attempt == 0:
+                        try:
+                            page.wait_for_load_state("load", timeout=5000)
+                        except PlaywrightTimeoutError:
+                            pass
+                        continue
+                    raise RuntimeError(
+                        f"Failed to produce image observation: {e}"
+                    ) from e
 
     def fetch_browser_info(self, page: Page) -> BrowserInfo:
         client = page.context.new_cdp_session(page)
