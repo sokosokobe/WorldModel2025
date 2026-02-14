@@ -10,6 +10,7 @@ from browser_env.utils import StateInfo, pil_to_b64, pil_to_vertex
 from llms import lm_config
 from llms.tokenizers import Tokenizer
 from llms.utils import APIInput
+from agent.prompts.task_type_prompts import get_task_type_hint, get_spatial_hint
 
 
 class Instruction(TypedDict):
@@ -39,13 +40,12 @@ class PromptConstructor(object):
     def get_lm_api_input(
         self, intro: str, examples: list[tuple[str, str]], current: str
     ) -> APIInput:
-
         """Return the require format for an API"""
         message: list[dict[str, str]] | str
         if "openai" in self.lm_config.provider:
             if self.lm_config.mode == "chat":
                 message = [{"role": "system", "content": intro}]
-                for (x, y) in examples:
+                for x, y in examples:
                     message.append(
                         {
                             "role": "system",
@@ -174,7 +174,9 @@ class DirectPromptConstructor(PromptConstructor):
         max_obs_length = self.lm_config.gen_config["max_obs_length"]
         if max_obs_length:
             if self.lm_config.provider == "google":
-                print("NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length.")
+                print(
+                    "NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length."
+                )
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
@@ -203,9 +205,7 @@ class DirectPromptConstructor(PromptConstructor):
         if match:
             return match.group(1).strip()
         else:
-            raise ActionParsingError(
-                f"Cannot parse action from response {response}"
-            )
+            raise ActionParsingError(f"Cannot parse action from response {response}")
 
 
 class CoTPromptConstructor(PromptConstructor):
@@ -236,7 +236,9 @@ class CoTPromptConstructor(PromptConstructor):
         max_obs_length = self.lm_config.gen_config["max_obs_length"]
         if max_obs_length:
             if self.lm_config.provider == "google":
-                print("NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length.")
+                print(
+                    "NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length."
+                )
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
@@ -290,6 +292,18 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         meta_data: dict[str, Any] = {},
     ) -> APIInput:
         intro = self.instruction["intro"]
+
+        # Add task type specific hints
+        if "eval_types" in meta_data:
+            hint = get_task_type_hint(meta_data["eval_types"])
+            if hint:
+                intro += f"\n\n{hint}"
+
+        # Add spatial layout hints if spatial keywords detected in intent
+        spatial_hint = get_spatial_hint(intent)
+        if spatial_hint:
+            intro += spatial_hint
+
         examples = self.instruction["examples"]
         template = self.instruction["template"]
         keywords = self.instruction["meta_data"]["keywords"]
@@ -299,14 +313,17 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
         max_obs_length = self.lm_config.gen_config["max_obs_length"]
         if max_obs_length:
             if self.lm_config.provider == "google":
-                print("NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length.")
+                print(
+                    "NOTE: This is a Gemini model, so we use characters instead of tokens for max_obs_length."
+                )
                 obs = obs[:max_obs_length]
             else:
                 obs = self.tokenizer.decode(self.tokenizer.encode(obs)[:max_obs_length])  # type: ignore[arg-type]
 
         page = state_info["info"]["page"]
         url = page.url
-        previous_action_str = meta_data["action_history"][-1]
+        action_history = meta_data.get("action_history", [])
+        previous_action_str = action_history[-1] if action_history else "None"
         current = template.format(
             objective=intent,
             url=self.map_url_to_real(url),
@@ -339,7 +356,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                         "content": [{"type": "text", "text": intro}],
                     }
                 ]
-                for (x, y, z) in examples:
+                for x, y, z in examples:
                     example_img = Image.open(z)
                     message.append(
                         {
@@ -353,9 +370,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                                 },
                                 {
                                     "type": "image_url",
-                                    "image_url": {
-                                        "url": pil_to_b64(example_img)
-                                    },
+                                    "image_url": {"url": pil_to_b64(example_img)},
                                 },
                             ],
                         }
@@ -407,7 +422,7 @@ class MultimodalCoTPromptConstructor(CoTPromptConstructor):
                     intro,
                     "Here are a few examples:",
                 ]
-                for (x, y, z) in examples:
+                for x, y, z in examples:
                     example_img = Image.open(z)
                     message.append(f"Observation\n:{x}\n")
                     message.extend(

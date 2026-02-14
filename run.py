@@ -2,6 +2,7 @@
 
 Modified from https://github.com/web-arena-x/webarena/blob/main/run.py.
 """
+
 import argparse
 import glob
 import json
@@ -68,9 +69,7 @@ def config() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run end-to-end evaluation on the benchmark"
     )
-    parser.add_argument(
-        "--render", action="store_true", help="Render the browser"
-    )
+    parser.add_argument("--render", action="store_true", help="Render the browser")
 
     parser.add_argument(
         "--slow_mo",
@@ -214,10 +213,7 @@ def early_stop(
     last_k_actions = trajectory[1::2][-k:]  # type: ignore[assignment]
     if len(last_k_actions) >= k:
         if all(
-            [
-                action["action_type"] == ActionTypes.NONE
-                for action in last_k_actions
-            ]
+            [action["action_type"] == ActionTypes.NONE for action in last_k_actions]
         ):
             return True, f"Failed to parse actions for {k} times"
 
@@ -233,29 +229,18 @@ def early_stop(
 
     if last_action["action_type"] != ActionTypes.TYPE:
         if len(last_k_actions) >= k:
-            if all(
-                [
-                    is_equivalent(action, last_action)
-                    for action in last_k_actions
-                ]
-            ):
+            if all([is_equivalent(action, last_action) for action in last_k_actions]):
                 return True, f"Same action for {k} times"
 
     else:
         # check the action sequence
-        if (
-            sum([is_equivalent(action, last_action) for action in action_seq])
-            >= k
-        ):
+        if sum([is_equivalent(action, last_action) for action in action_seq]) >= k:
             return True, f"Same typing action for {k} times"
 
     return False, ""
 
 
-def test(
-    args: argparse.Namespace,
-    config_file_list: list[str]
-) -> None:
+def test(args: argparse.Namespace, config_file_list: list[str]) -> None:
     # 強制的に captioning を無効化
     caption_image_fn = None
     eval_caption_image_fn = None
@@ -282,22 +267,21 @@ def test(
         caption_image_fn = None
 
     # Load a (possibly different) captioning model for running VQA evals.
-    if DATASET == 'visualwebarena':
-        if (
-            caption_image_fn
-            and args.eval_captioning_model == args.captioning_model
-        ):
+    if DATASET == "visualwebarena":
+        if caption_image_fn and args.eval_captioning_model == args.captioning_model:
             eval_caption_image_fn = caption_image_fn
         else:
             if "captioner" in args.observation_type:
                 eval_caption_image_fn = image_utils.get_captioning_fn(
                     args.eval_captioning_model_device,
-                    torch.float16
-                    if (
-                        torch.cuda.is_available()
-                        and args.eval_captioning_model_device == "cuda"
-                    )
-                    else torch.float32,
+                    (
+                        torch.float16
+                        if (
+                            torch.cuda.is_available()
+                            and args.eval_captioning_model_device == "cuda"
+                        )
+                        else torch.float32
+                    ),
                     args.eval_captioning_model,
                 )
             else:
@@ -308,9 +292,11 @@ def test(
 
     agent = construct_agent(
         args,
-        captioning_fn=caption_image_fn
-        if args.observation_type == "accessibility_tree_with_captioner"
-        else None,
+        captioning_fn=(
+            caption_image_fn
+            if args.observation_type == "accessibility_tree_with_captioner"
+            else None
+        ),
     )  # NOTE: captioning_fn here is used for captioning input images.
 
     env = ScriptBrowserEnv(
@@ -374,8 +360,14 @@ def test(
                     for image_path in image_paths:
                         # Load image either from the web or from a local path.
                         if image_path.startswith("http"):
-                            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-                            input_image = Image.open(requests.get(image_path, stream=True, headers = headers).raw)
+                            headers = {
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                            }
+                            input_image = Image.open(
+                                requests.get(
+                                    image_path, stream=True, headers=headers
+                                ).raw
+                            )
                         else:
                             input_image = Image.open(image_path)
 
@@ -390,7 +382,10 @@ def test(
             state_info: StateInfo = {"observation": obs, "info": info}
             trajectory.append(state_info)
 
-            meta_data = {"action_history": ["None"]}
+            meta_data = {
+                "action_history": ["None"],
+                "eval_types": _c.get("eval", {}).get("eval_types", []),
+            }
             while True:
                 early_stop_flag, stop_info = early_stop(
                     trajectory, max_steps, early_stop_thresholds
@@ -416,9 +411,11 @@ def test(
                     action,
                     state_info["info"]["observation_metadata"],
                     action_set_tag=args.action_set_tag,
-                    prompt_constructor=agent.prompt_constructor
-                    if isinstance(agent, PromptAgent)
-                    else None,
+                    prompt_constructor=(
+                        agent.prompt_constructor
+                        if isinstance(agent, PromptAgent)
+                        else None
+                    ),
                 )
                 render_helper.render(
                     action, state_info, meta_data, args.render_screenshot
@@ -442,9 +439,7 @@ def test(
                 config_file, captioning_fn=eval_caption_image_fn
             )
             score = evaluator(
-                trajectory=trajectory,
-                config_file=config_file,
-                page=env.page
+                trajectory=trajectory, config_file=config_file, page=env.page
             )
 
             scores.append(score)
@@ -455,9 +450,7 @@ def test(
                 logger.info(f"[Result] (FAIL) {config_file}")
 
             if args.save_trace_enabled:
-                env.save_trace(
-                    Path(args.result_dir) / "traces" / f"{task_id}.zip"
-                )
+                env.save_trace(Path(args.result_dir) / "traces" / f"{task_id}.zip")
         except openai.OpenAIError as e:
             logger.info(f"[OpenAI Error] {repr(e)}")
         except Exception as e:
@@ -489,9 +482,7 @@ def prepare(args: argparse.Namespace) -> None:
     # prepare result dir
     result_dir = args.result_dir
     if not result_dir:
-        result_dir = (
-            f"cache/results_{time.strftime('%Y%m%d%H%M%S', time.localtime())}"
-        )
+        result_dir = f"cache/results_{time.strftime('%Y%m%d%H%M%S', time.localtime())}"
     if not Path(result_dir).exists():
         Path(result_dir).mkdir(parents=True, exist_ok=True)
         args.result_dir = result_dir
@@ -507,9 +498,7 @@ def prepare(args: argparse.Namespace) -> None:
 
 def get_unfinished(config_files: list[str], result_dir: str) -> list[str]:
     result_files = glob.glob(f"{result_dir}/*.html")
-    task_ids = [
-        os.path.basename(f).split(".")[0].split("_")[1] for f in result_files
-    ]
+    task_ids = [os.path.basename(f).split(".")[0].split("_")[1] for f in result_files]
     unfinished_configs = []
     for config_file in config_files:
         task_id = os.path.basename(config_file).split(".")[0]
