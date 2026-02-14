@@ -38,9 +38,49 @@ from .utils import (
     Observation,
     png_bytes_to_numpy,
 )
+from .color_extractor import extract_dominant_color
+
+# UI element patterns for marking filter/navigation elements
+# These patterns help distinguish UI controls from actual product data
+UI_ELEMENT_PATTERNS = [
+    # Filter-related patterns
+    (r"(?:sort|filter|price|rating).*(?:by|range|option)", "[FILTER] "),
+    (r"combobox.*(?:sort|filter|price)", "[FILTER] "),
+    (r"slider", "[FILTER] "),
+    (r"spinbutton", "[FILTER] "),
+    # Navigation-related patterns
+    (r"^navigation$", "[NAV] "),
+    (r"menubar", "[NAV] "),
+    (r"toolbar", "[NAV] "),
+    (r"breadcrumb", "[NAV] "),
+]
+
+
+def get_ui_element_marker(role: str, name: str) -> str:
+    """
+    Add [FILTER] or [NAV] prefix to UI elements based on their role and name.
+
+    This helps the agent distinguish between:
+    - Filter UI elements (price sliders, sort dropdowns)
+    - Navigation elements (menus, breadcrumbs)
+    - Actual content (products, text)
+
+    Args:
+        role: The accessibility role of the element
+        name: The name/label of the element
+
+    Returns:
+        Marker string like "[FILTER] " or "[NAV] ", or empty string if not a UI element
+    """
+    combined = f"{role} {name}".lower()
+    for pattern, marker in UI_ELEMENT_PATTERNS:
+        if re.search(pattern, combined):
+            return marker
+    return ""
 
 
 def remove_unicode(input_string):
+    """Remove non-ASCII Unicode characters from a string."""
     # Define a regex pattern to match Unicode characters
     unicode_pattern = re.compile(r"[^\x00-\x7F]+")
 
@@ -103,6 +143,8 @@ class TextObervationProcessor(ObservationProcessor):
             self.captioning_fn = captioning_fn
             # Cache captions.
             self.url2caption = {}
+            # Cache extracted colors for product images
+            self.url2color = {}
 
     def fetch_browser_info(
         self,
@@ -153,7 +195,7 @@ class TextObervationProcessor(ObservationProcessor):
         info: BrowserInfo = {"DOMTree": tree, "config": config}
 
         return info
-    
+
     @staticmethod
     def get_bounding_client_rect(
         client: CDPSession, backend_node_id: str
@@ -432,10 +474,7 @@ class TextObervationProcessor(ObservationProcessor):
                 # always inside the viewport
                 node["union_bound"] = [0.0, 0.0, 10.0, 10.0]
             else:
-                response = self.get_bounding_client_rect(
-                    client,
-                    backend_node_id
-                )
+                response = self.get_bounding_client_rect(client, backend_node_id)
                 if response.get("result", {}).get("subtype", "") == "error":
                     node["union_bound"] = None
                 else:
@@ -528,7 +567,9 @@ class TextObervationProcessor(ObservationProcessor):
             try:
                 role = node["role"]["value"]
                 name = node["name"]["value"]
-                node_str = f"[{obs_node_id}] {role} {repr(name)}"
+                # Add UI element marker if applicable
+                ui_marker = get_ui_element_marker(role, name)
+                node_str = f"[{obs_node_id}] {ui_marker}{role} {repr(name)}"
                 properties = []
                 for property in node.get("properties", []):
                     try:
@@ -677,10 +718,19 @@ class TextObervationProcessor(ObservationProcessor):
                         assert len(valid_urls) == len(
                             captions
                         ), f"len(images)={len(valid_urls)}, len(captions)={len(captions)}"
-                        for image_url, caption in zip(valid_urls, captions):
+                        for image_url, caption, img in zip(
+                            valid_urls, captions, image_pixels
+                        ):
                             self.url2caption[image_url] = remove_unicode(
                                 caption.strip()
                             )
+                            # Extract dominant color from the image
+                            try:
+                                color_info = extract_dominant_color(img)
+                                if color_info["confidence"] > 0.1:
+                                    self.url2color[image_url] = color_info["name"]
+                            except Exception as e:
+                                print(f"Color extraction warning: {e}")
 
                 image_idx = 0
                 for image in images:
@@ -698,6 +748,12 @@ class TextObervationProcessor(ObservationProcessor):
                         elif "data:image/svg" not in image_url:
                             print(f"WARNING: {image_url} not in self.url2caption")
 
+                        # Add color information if available
+                        if image_url in self.url2color:
+                            updated_alt = (
+                                f"{updated_alt}, color: {self.url2color[image_url]}"
+                            )
+
                         if "url:" not in updated_alt:
                             updated_alt = f"{updated_alt}, url: {image_url}"
 
@@ -708,9 +764,7 @@ class TextObervationProcessor(ObservationProcessor):
 
             if self.observation_type == "accessibility_tree_with_captioner":
                 frame_ax_trees = self.fetch_page_accessibility_tree(
-                    page,
-                    browser_info,
-                    current_viewport_only=self.current_viewport_only
+                    page, browser_info, current_viewport_only=self.current_viewport_only
                 )
                 content, obs_nodes_info = self.parse_accessibility_tree(frame_ax_trees)
                 content = self.clean_accesibility_tree(content)
