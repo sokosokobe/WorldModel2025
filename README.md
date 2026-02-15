@@ -17,6 +17,9 @@
 ## 開発ログ(Notion)
 https://www.notion.so/World-Model-group20-2c811b73cba880c18309f26287c0bae5?source=copy_link
 
+## 説明動画(YouTube)
+https://youtu.be/rD9HqLgh2gM
+
 ## TODOs
 - [x] Add human trajectories.
 - [x] Add GPT-4V + SoM trajectories from our paper.
